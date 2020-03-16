@@ -9,4 +9,6 @@ Be aware that in most cases this only the development phase as the final code ha
 
 In respect to the  peripheral_dev_tst  these projects can target a specific platform or operating system. 
 
+For the cmake go to the cmake/build directory and do cmake ../
+
 
