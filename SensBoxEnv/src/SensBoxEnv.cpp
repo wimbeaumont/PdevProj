@@ -44,6 +44,8 @@ LinuxI2CInterface* mbedi2cp= &mbedi2c;
 #else 
 #define  OS_SELECT "linux_dummy" 
 #include "DummyI2CInterface.h"   
+DummyI2CInterface  mbedi2c;
+DummyI2CInterface* mbedi2cp= &mbedi2c;
 #endif
 #ifndef OS_SELECT 
 #define OS_SELECT "linux_dummy" 
@@ -57,8 +59,6 @@ LinuxI2CInterface* mbedi2cp= &mbedi2c;
 #include "hts221.h"
 #include "veml7700.h"  // differs from the MBED version
 
-DummyI2CInterface  mbedi2c;
-DummyI2CInterface* mbedi2cp= &mbedi2c;
 
 I2CInterface* i2cdev= mbedi2cp;
 
@@ -151,7 +151,7 @@ int main(void) {
     char buffer[1024] = {0};  // receive buffer 
     char message[1024];
     // Creating socket file descriptor 
-    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) { 
+/*    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) { 
         perror("socket failed"); 
         exit(EXIT_FAILURE); 
     } 
@@ -173,6 +173,8 @@ int main(void) {
     } 
 	// socket setup done 	
 
+
+*/
 	// initialize the I2C devices   
    printf("Check Env  program version %s, compile date %s time %s\n\r",SENSBOXENVVER,__DATE__,__TIME__);
    printf("getVersion :%s\n\r ",gv.getversioninfo());
@@ -214,13 +216,15 @@ int main(void) {
 
 	  // socket waiting 	
 		
-	  if (listen(server_fd, 3) < 0) {  perror("listen");   exit(EXIT_FAILURE);	 } 
+/*	  if (listen(server_fd, 3) < 0) {  perror("listen");   exit(EXIT_FAILURE);	 } 
      if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen))<0){ 
         perror("accept");   	     exit(EXIT_FAILURE); 
      } // blocking socket  
 	  valread = read( new_socket , buffer, 1024); 
 
      printf("This is from the client : %s\n",buffer ); //buffer has to be interpreted 
+
+*/
 	  // read the I2C devices 
      float hum, Temp;
      seconds = time(NULL);
@@ -228,17 +232,23 @@ int main(void) {
 		// remove the new line    
 		char * p = strchr(message,'\n');	if ( p)  { *p = '\0' ;}
 
-	  
+
+printf("before read temp\n");  
      for (int lc=0; lc<nr_Tsens ;lc++) {
  	         Temp=tid[lc].getTemperature( );
              sprintf(message, "%s T%d %.2f ",message, lc, Temp );
      }
+
+
+printf("after read temperature %s \n\r",message);
         shs.GetHumidity(&hum);
         shs.GetTemperature(&Temp);
+
+printf("after read humidity \n\r");
         sprintf(message,"%s T%d %.2f H1  %.2f  L %.3f\n\r",message,nr_Tsens, Temp, hum,luxm.get_lux (false));
 		  	
-		  //printf("%s",message);
-		  send(new_socket , message , strlen(message) , 0 ); 		
+		  printf("%s",message);
+//		  send(new_socket , message , strlen(message) , 0 ); 		
         Get_Result=false;
     if( Always_Result) {i2cdev->wait_for_ms(waitms);}
     
