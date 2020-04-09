@@ -95,7 +95,7 @@ foreach ( testprog ${ALLPROGS})
 	add_executable( ${testname}  ${testprog}  )
 	# just add some compiler flags
 	#target_compile_options(${testname}  PUBLIC -std=c++1y -Wall -D${TARGET_FLAG})
-	target_compile_options(${testname}  PUBLIC -Wall -D${TARGET_FLAG})
+	target_compile_options(${testname}  PUBLIC -g -Wall -D${TARGET_FLAG})
 	# this lets me include files relative to the root src dir with a <> pair
 	#target_include_directories(${testname} PUBLIC  ../../PeripheralDevices/*/)
 	target_include_directories(${testname} PUBLIC  ${dev_incl_dirs}  )

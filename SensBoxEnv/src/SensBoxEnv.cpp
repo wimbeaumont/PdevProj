@@ -211,7 +211,8 @@ int main(void) {
 
    while(1){
 
-    int lc2=0;     
+    int lc2=0;  
+	int status=0;	
     while(STAYLOOP ) {
 
 	  // socket waiting 	
@@ -231,20 +232,14 @@ int main(void) {
 	  sprintf(message,"time = %s ",ctime(&seconds) 	);
 		// remove the new line    
 		char * p = strchr(message,'\n');	if ( p)  { *p = '\0' ;}
-
-
-printf("before read temp\n");  
      for (int lc=0; lc<nr_Tsens ;lc++) {
  	         Temp=tid[lc].getTemperature( );
              sprintf(message, "%s T%d %.2f ",message, lc, Temp );
      }
-
-
-printf("after read temperature %s \n\r",message);
-        shs.GetHumidity(&hum);
-        shs.GetTemperature(&Temp);
-
-printf("after read humidity \n\r");
+        status=shs.GetHumidity(&hum);
+		printf("after read humidity  status %d \n\r", status );
+        status=shs.GetTemperature(&Temp);
+	    printf("after read humidityT %d  \n\r", status);
         sprintf(message,"%s T%d %.2f H1  %.2f  L %.3f\n\r",message,nr_Tsens, Temp, hum,luxm.get_lux (false));
 		  	
 		  printf("%s",message);
