@@ -14,12 +14,6 @@ project(cmaketry_project  )
 # `sources` and `data`
 
 
-# generate the lib 
-
-file(GLOB_RECURSE simplelibs  ../../PeripheralDevices/*.cpp  ../../PeripheralDevices/*.h )
-# for the moment don't include  MCP4728setaddr.cpp 
-
-#message ( "${CMAKE_CURRENT_SOURCE_DIR}/../../PeripheralDevices/MCP4728//MCP4728setaddr.cpp" )
 
 
 # message( ${simplelibs})
@@ -46,16 +40,25 @@ else()
 	endif() 
 endif()
 
+# generate the i2c dev  lib 
+
+file(GLOB_RECURSE simplelibs  ../../PeripheralDevices/*.cpp  ../../PeripheralDevices/*.h )
+# for the moment don't include  MCP4728setaddr.cpp 
 list(REMOVE_ITEM simplelibs "${CMAKE_CURRENT_SOURCE_DIR}/../../PeripheralDevices/MCP4728/MCP4728setaddr.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/../../PeripheralDevices/MCP4728/MCP4728setaddr.h")
 
-
-add_library(tstlib SHARED ${simplelibs})
+add_library(tstlib STATIC  ${simplelibs})
 target_include_directories(tstlib PUBLIC  ../../PeripheralDevices/DevInterfaces/)
+#message ( "${CMAKE_CURRENT_SOURCE_DIR}/../../PeripheralDevices/MCP4728//MCP4728setaddr.cpp" )
+
+
+#generate the scpi lib 
+file(GLOB_RECURSE scpiliblist  ../../PdevUtils/scpi-parser/*.c  ../../PdevUtils/scpi-parser/*.h )
+add_library(scpiparserlib STATIC  ${scpiliblist})
+target_include_directories(scpiparserlib  PUBLIC  ../../PdevUtils/scpi-parser/inc )
+
 #set_target_properties(tstlib PROPERTIES LINKER_LANGUAGE CXX)
 #set_target_properties(tstlib PROPERTIES COMPILER_LANGUAGE CXX)
 
-# you can use set(sources src/main.cpp) etc if you don't want to
-# use globing to find files automatically
 
 # collect all main programs 
 file(GLOB_RECURSE ALLPROGS  ../*/src/*.cpp)
@@ -74,13 +77,13 @@ MACRO(HEADER_DIRECTORIES return_list)
     SET(${return_list} ${dir_list})
 ENDMACRO()
 
-
-
 # macro source https://stackoverflow.com/questions/53013529/how-to-tell-cmake-to-recursively-search-include-directory-when-specificying-incl
 
 #get the list 
 
 HEADER_DIRECTORIES ( dev_incl_dirs)
+
+
 
 #message( ${dev_incl_dirs})
 
