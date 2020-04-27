@@ -86,6 +86,7 @@ int main(void) {
     int addrlen = sizeof(address); 
     char buffer[1024] = {0};  // receive buffer 
     char message[1024];
+    char message_f[256]; // message for formatting 
     // Creating socket file descriptor 
     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) { 
         perror("socket failed"); 
@@ -166,7 +167,7 @@ int main(void) {
      } // blocking socket  
 	  valread = read( new_socket , buffer, 1024); 
 
-     printf("This is from the client : %s\n",buffer ); //buffer has to be interpreted 
+     printf("This is from the client ( # %d char)  : %s\n",valread,buffer ); //buffer has to be interpreted 
 
 	  // read the I2C devices 
      float hum, Temp;
@@ -177,7 +178,7 @@ int main(void) {
 		
      for (int lc=0; lc<nr_Tsens ;lc++) {
  	         Temp=tid[lc].getTemperature( );
-             sprintf(message, "%s T%d %.2f ",message, lc, Temp );
+             sprintf(message_f, " T%d %.2f ", lc, Temp );strcat(message,message_f);
      }
         status|=shs.GetHumidity(&hum);
 		//printf("after read humidity  status %d \n\r", status );
@@ -185,8 +186,8 @@ int main(void) {
 	    //printf("after read humidityT %d  \n\r", status);
 		float lux=luxm.get_lux (false);
 		status |= luxm.get_status( );
-        sprintf(message,"%s T%d %.2f H1  %.2f  L %.3f status %03d\n\r",message,nr_Tsens, Temp, hum,lux,status);
-		  	
+        sprintf(message_f," T %d %.2f H1  %.2f  L %.3f status %03d\n\r",nr_Tsens, Temp, hum,lux,status);
+	     strcat(message,message_f); 	
 		  printf("%s",message);
 		  send(new_socket , message , strlen(message) , 0 ); 		
         Get_Result=false;
