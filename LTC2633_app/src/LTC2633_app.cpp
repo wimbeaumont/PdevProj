@@ -21,6 +21,7 @@
 
 // #include "LTC2633setaddr.h"
 #include "ltc2633.h"
+#include <string.h>
 
 // OS / platform  specific  configs 
 #if defined  __MBED__ 

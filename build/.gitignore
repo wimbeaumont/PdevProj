@@ -1,6 +1,7 @@
 #ignore all in this directory 
 *
 #but not the cmake file and .gitignore itself
+!.git
 !.gitignore
 
 
