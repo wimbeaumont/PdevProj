@@ -52,9 +52,9 @@ target_include_directories(tstlib PUBLIC  ../../PeripheralDevices/DevInterfaces/
 
 
 #generate the scpi lib 
-file(GLOB_RECURSE scpiliblist  ../../PdevUtils/scpi-parser/*.c  ../../PdevUtils/scpi-parser/*.h )
-add_library(scpiparserlib STATIC  ${scpiliblist})
-target_include_directories(scpiparserlib  PUBLIC  ../../PdevUtils/scpi-parser/inc )
+#file(GLOB_RECURSE scpiliblist  ../../PdevUtils/scpi-parser/*.c  ../../PdevUtils/scpi-parser/*.h )
+#add_library(scpiparserlib STATIC  ${scpiliblist})
+#target_include_directories(scpiparserlib  PUBLIC  ../../PdevUtils/scpi-parser/inc )
 
 #set_target_properties(tstlib PROPERTIES LINKER_LANGUAGE CXX)
 #set_target_properties(tstlib PROPERTIES COMPILER_LANGUAGE CXX)
