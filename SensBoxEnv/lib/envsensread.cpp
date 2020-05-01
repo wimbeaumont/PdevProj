@@ -41,28 +41,18 @@ I2CInterface* i2cdev= mbedi2cp;
 
 // all the devices are static ( in real world they really are )
 VEML7700 luxm ( i2cdev);  // so static global  in this file
-HTS221 shs ( i2cdev, true, true ); // initialize with one shot .
 // init tempeature senesor with addr 1 en 2
 const int NrTsens=2;
 AT30TSE75x_E tid[NrTsens] ={ AT30TSE75x_E( i2cdev ,1), AT30TSE75x_E( i2cdev ,2)};
+HTS221 shs ( i2cdev, true, true ); // initialize with one shot .
 
 int status =0;
 void wait_for_ms(int nr){ i2cdev->wait_for_ms(nr);};
 int get_status(void){return status;}
 
 int init_i2c_dev(void) {
-
-	 //printf ( "VEML770 lib version :%s\n\r ",luxm.getversioninfo());
- 	 int status=luxm.get_status( );
- 	 if( status) {    printf("get error %d after init \n\r", status);
- 	 	 status=status-100;
- 	 	 return status;
- 	 }
- 	 else {
- 		 luxm.set_integrationtime(1000); // > max
- 		 luxm.set_gain(3); // > max
- 	 }
- 	 status=shs.get_status( );
+	printf(" envsensread compiled for  %s \n\r", OS_SELECT);
+ 	 int status=shs.get_status( );
  	 if(status)  {
  		 printf("get error %d after init humidity \n\r", status);
  		 printf ( "HTS221  lib version :%s\n\r ",shs.getversioninfo());
@@ -71,7 +61,18 @@ int init_i2c_dev(void) {
  	 //printf ( "HTS221 lib version :%s\n\r ",shs.getversioninfo());
  	 //int id=(int) shs.ReadID();
  	 //printf("Who Am I returns %02x \n\r", id);
- 	 //printf ( "AT30SE75x version :%s\n\r ",tid[0].getversioninfo());  // will be the same for both sensors
+
+	 
+ 	  status=luxm.get_status( );
+ 	 if( status) {    printf("get error %d after init \n\r", status);
+ 	 	 status=status-100;
+ 	 	 return status;
+ 	 }
+ 	 else {
+ 		 luxm.set_integrationtime(1000); // > max
+ 		 luxm.set_gain(3); // > max
+		  //printf ( "VEML770 lib version :%s\n\r ",luxm.getversioninfo());
+ 	 }
  	 for ( int lc=0 ; lc < NrTsens ; lc++) {
       	  //printf( "Taddr %x , Eaddr %x \n\r ", tid[lc].getTaddr(),tid[lc].getEaddr());
  		 status=tid[lc].err_status ;

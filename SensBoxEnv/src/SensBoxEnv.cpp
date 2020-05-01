@@ -58,6 +58,10 @@ int main(void) {
     int addrlen = sizeof(address); 
     char buffer[1024] = {0};  // receive buffer 
     char message[1024];
+
+	printf("Check Env  program version %s, compile date %s time %s\n\r",SENSBOXENVVER,__DATE__,__TIME__);
+
+	// initialize the I2C devices   
     int status=init_i2c_dev();
     if ( status ){
     	printf("failed to init i2c devices returns %d \n\r",status);
@@ -89,12 +93,6 @@ int main(void) {
 	// socket setup done 	
 
 
-
-	// initialize the I2C devices   
-   printf("Check Env  program version %s, compile date %s time %s\n\r",SENSBOXENVVER,__DATE__,__TIME__);
-
-
-
    while(1){
 
     int lc2=0;  
@@ -107,7 +105,7 @@ int main(void) {
     	} // blocking socket
     	valread = read( new_socket , buffer, 1024);
     	buffer[valread]='\0';
-  		//printf("This is from the client : %s length %d  expect %d ",buffer,strlen(buffer),valread );
+  		//printf("This is from the client : %s length %d  expect %d \n\r",buffer,strlen(buffer),valread );
 	  	if (valread > 0) {
 	  		env_scpi_execute_command( buffer, valread);
 	  		strcpy(message,	env_get_result());
@@ -115,12 +113,12 @@ int main(void) {
 	  	} else {
 	  		strcpy(message, "message is zerro");
 	  	}
-	  	//printf( "will send %s\n\r ", message);
+	  	//printf( "will send %s length %d \n\r ", message ,strlen(message)  );
 	  	send(new_socket , message , strlen(message) , 0 );
-	  	// printf("This is from the client ( # %d char)  : %s\n",valread,buffer ); //buffer has to be interpreted
+		//printf("Have sent message %s\n\r ", message);
     
 	  	wait_for_ms(100);
-  
+  	  	
 	  	lc2++;
   } //while stayloop
  

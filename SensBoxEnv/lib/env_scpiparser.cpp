@@ -38,7 +38,7 @@ SOFTWARE.
 struct scpi_parser_context ctx;
 
 
-extern  float read_temperature( int ch=0 );
+extern  float read_temperature( int );
 extern  float read_humidity(void);
 extern  float read_luminosity(void);
 
@@ -150,10 +150,11 @@ scpi_error_t get_temperature_ch(struct scpi_parser_context* context,struct scpi_
 	if( chan > 2 ) chan=2; // unsigned so can not  < 0
 
 	 float temperature=0;
+	//printf("read temperature for ch : %d \n\r", chan);
 	temperature=read_temperature(chan);
-
+	//printf("got  temperature  %f for ch : %d \n\r",temperature , chan );
 	add2resultf(temperature);
-
+	//printf("added temperature  %f for ch : %d to result \n\r",temperature , chan );
 	scpi_free_tokens(command);
 
 	return SCPI_SUCCESS;

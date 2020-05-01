@@ -54,12 +54,12 @@ SOFTWARE.
   		  			strcat(stringbuffer,"\n");
   		  		}
   		void print( int i){
-  					char snum[6];
+  					char snum[20];
   					sprintf( snum, "%d",i);
   					strcat(stringbuffer,snum);
   				}
   		void print( float  i){
-  		  					char snum[6];
+  		  					char snum[20];
   		  					sprintf( snum, "%f",i);
   		  					strcat(stringbuffer,snum);
   		  				}
