@@ -58,9 +58,9 @@ int main(void) {
     int addrlen = sizeof(address); 
     char buffer[1024] = {0};  // receive buffer 
     char message[1024];
-
-    if ( init_i2c_dev() ){
-    	printf("failed to init i2c devices \n\r");
+    int status=init_i2c_dev();
+    if ( status ){
+    	printf("failed to init i2c devices returns %d \n\r",status);
     	return -1;
     }
     scpi_setup();// initialize the parser
@@ -98,7 +98,7 @@ int main(void) {
    while(1){
 
     int lc2=0;  
-	//int status;;
+
     while(STAYLOOP ) {
     	// socket waiting
     	if (listen(server_fd, 3) < 0) {  perror("listen");   exit(EXIT_FAILURE);	 }
