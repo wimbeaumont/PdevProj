@@ -1,5 +1,6 @@
 #include "AT30TSE75x.h"
-
+#include <stdlib.h>
+#include <string.h>
 /* extends the AT30TSE75x class 
     * configure with the max resolution and other settings 
     * reads during initialization the temperature correction 
