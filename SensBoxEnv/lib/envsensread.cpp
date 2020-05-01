@@ -64,8 +64,8 @@ int init_i2c_dev(void) {
  	 }
  	 status=shs.get_status( );
  	 if(status)  {
- 		 //printf("get error %d after init humidity \n\r", err);
- 		 // printf ( "HTS221  lib version :%s\n\r ",shs.getversioninfo());
+ 		 printf("get error %d after init humidity \n\r", status);
+ 		 printf ( "HTS221  lib version :%s\n\r ",shs.getversioninfo());
  		 return status -200;
  	 }
  	 //printf ( "HTS221 lib version :%s\n\r ",shs.getversioninfo());
@@ -76,11 +76,12 @@ int init_i2c_dev(void) {
       	  //printf( "Taddr %x , Eaddr %x \n\r ", tid[lc].getTaddr(),tid[lc].getEaddr());
  		 status=tid[lc].err_status ;
  		 if(  status){
- 			 //printf("reading config registers failed \n\r");
-             if ( tid[lc].err_status== -20 ) {   tid[lc].err_status=0 ; }
+ 			 printf("reading config registers failed got status  \n\r",status);
+             if ( tid[lc].err_status== -20 ) {   tid[lc].err_status=0 ; status=0; }
              else {return status-200 - lc*100;} //  major failure
  		 }
  	 }
+ 	 return status;
 }  // end init i2c
 
 float read_temperature (int  ch){
