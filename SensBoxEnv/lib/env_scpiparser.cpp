@@ -66,7 +66,7 @@ void scpi_setup() {
 	 * After initialising the parser, we set up the command tree.  Ours is
 	 *
 	 *  *IDN?         -> identify
-	 *
+	 *  *STOP	  -> stop the server  
 	 *  :MEASure
 	 *    :HUMIdity?   -> get humidity in % , float
 	 *    :LUMInosity? -> get luminosity in LUX
@@ -98,7 +98,7 @@ void scpi_setup() {
 scpi_error_t identify(struct scpi_parser_context* context,struct scpi_token* command) {
 	scpi_free_tokens(command);
 
-	add2result("EnvServ V1,0");
+	add2result("EnvServ V1.2");
 	return SCPI_SUCCESS;
 }
 
