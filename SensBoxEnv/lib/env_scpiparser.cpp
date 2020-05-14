@@ -42,9 +42,15 @@ extern  float read_temperature( int );
 extern  float read_humidity(void);
 extern  float read_luminosity(void);
 
+
+
 scpi_error_t identify(struct scpi_parser_context* context,struct scpi_token* command);
+scpi_error_t send_stop(struct scpi_parser_context* context,struct scpi_token* command);
 scpi_error_t get_temperature(struct scpi_parser_context* context,struct scpi_token* command);
-scpi_error_t get_temperature_ch(struct scpi_parser_context* context,struct scpi_token* command);
+scpi_error_t get_temperature_ch(struct scpi_parser_context* context,struct scpi_token* command);  // for channel given as parameter
+scpi_error_t get_temperature_ch0(struct scpi_parser_context* context,struct scpi_token* command);
+scpi_error_t get_temperature_ch1(struct scpi_parser_context* context,struct scpi_token* command);
+scpi_error_t get_temperature_ch2(struct scpi_parser_context* context,struct scpi_token* command);
 scpi_error_t get_luminosity(struct scpi_parser_context* context,struct scpi_token* command);
 scpi_error_t get_humidity(struct scpi_parser_context* context,struct scpi_token* command);
 
@@ -65,12 +71,19 @@ void scpi_setup() {
 	 *    :HUMIdity?   -> get humidity in % , float
 	 *    :LUMInosity? -> get luminosity in LUX
 	 *    :TEMPerature?  -> get temperature of ch 0
-	 *    :TEMPerature?: CHX  -> get temperature of ch min (x,2)
+	 *    :TEMPerature?: CH X  -> get temperature of ch min (x,2)
+	 *    :TEMPerature? CH0  -> get temperature of ch0  ( or CH1  or CH2)
+	 *    :TEMPerature? 0   -> get temperature of ch0  ( or ch  1  or ch 2)
+	 *    :TEMP1?  -> get temperature of ch1   (or 0 or 2 )
 	 */
 	scpi_register_command(ctx.command_tree, SCPI_CL_SAMELEVEL, "*IDN?", 5,"*IDN?", 5, identify);
+	scpi_register_command(ctx.command_tree, SCPI_CL_SAMELEVEL, "*STOP", 5,"*STP", 3, send_stop);
 	measure = scpi_register_command(ctx.command_tree, SCPI_CL_CHILD, "MEASURE", 7, "MEAS", 4, NULL);
 	meas_temp=scpi_register_command(measure, SCPI_CL_CHILD, "TEMPERATURE?", 12, "TEMP?", 5,get_temperature);
-	scpi_register_command(meas_temp, SCPI_CL_CHILD, "CHANNEL", 6, "CH", 2,get_temperature_ch);
+	scpi_register_command(measure, SCPI_CL_CHILD, "TEMPERATURE0?", 13, "TEMP0?", 6,get_temperature_ch0);
+	scpi_register_command(measure, SCPI_CL_CHILD, "TEMPERATURE1?", 13, "TEMP1?", 6,get_temperature_ch1);
+	scpi_register_command(measure, SCPI_CL_CHILD, "TEMPERATURE2?", 13, "TEMP2?", 6,get_temperature_ch2);
+	scpi_register_command(meas_temp, SCPI_CL_CHILD, "CHANNEL#", 6, "CH#", 2,get_temperature_ch);
 	scpi_register_command(measure, SCPI_CL_CHILD, "HUMIDITY?", 9, "HUMI?", 5,get_humidity);
 	scpi_register_command(measure, SCPI_CL_CHILD, "LUMINOSITY?", 11, "LUMI?", 5,get_luminosity);
 
@@ -89,11 +102,17 @@ scpi_error_t identify(struct scpi_parser_context* context,struct scpi_token* com
 	return SCPI_SUCCESS;
 }
 
+scpi_error_t send_stop(struct scpi_parser_context* context,struct scpi_token* command) {
+	scpi_free_tokens(command);
+
+	add2result("STOP done");
+	return SCPI_SUCCESS;
+}
 
 /**
  * Read the temperature of ch 0
  */
-scpi_error_t get_temperature(struct scpi_parser_context* context,struct scpi_token* command) {
+scpi_error_t get_temperature_ch0(struct scpi_parser_context* context,struct scpi_token* command) {
 	float temperature;
 
 	temperature= read_temperature(0);
@@ -103,6 +122,24 @@ scpi_error_t get_temperature(struct scpi_parser_context* context,struct scpi_tok
 	return SCPI_SUCCESS;
 }
 
+scpi_error_t get_temperature_ch1(struct scpi_parser_context* context,struct scpi_token* command) {
+	float temperature;
+
+	temperature= read_temperature(1);
+
+	add2resultf(temperature);
+	scpi_free_tokens(command);
+	return SCPI_SUCCESS;
+}
+scpi_error_t get_temperature_ch2(struct scpi_parser_context* context,struct scpi_token* command) {
+	float temperature;
+
+	temperature= read_temperature(2);
+
+	add2resultf(temperature);
+	scpi_free_tokens(command);
+	return SCPI_SUCCESS;
+}
 
 
 /**
@@ -128,6 +165,36 @@ scpi_error_t get_luminosity(struct scpi_parser_context* context,struct scpi_toke
 	scpi_free_tokens(command);
 	return SCPI_SUCCESS;
 }
+
+scpi_error_t get_temperature(struct scpi_parser_context* context,struct scpi_token* command){
+	struct scpi_token* args;
+	struct scpi_numeric output_numeric;
+	unsigned char chan;// hc
+
+	args = command;
+	while (args != NULL && args->type == 0) {
+		args = args->next;
+	}
+	if ( args != NULL)	{
+		chan=0; // default if  wrong argument is given
+		if ( strcmp(args->value , "CH0") == 0  ) chan=0;
+		if ( strcmp(args->value , "CH1") == 0  ) chan=1;
+		if ( strcmp(args->value , "CH2") == 0  ) chan=2;
+		if ( strcmp(args->value , "0") == 0  ) chan=0;
+		if ( strcmp(args->value , "1") == 0  ) chan=1;
+		if ( strcmp(args->value , "2") == 0  ) chan=2;
+	} else { chan=0;}  // no parameter given
+	if( chan > 2 ) chan=2; // unsigned so can not  < 0
+	float temperature=0;
+	temperature=read_temperature(chan);
+	add2resultf(temperature);
+	scpi_free_tokens(command);
+	return SCPI_SUCCESS;
+}
+
+
+
+
 
 
 /**

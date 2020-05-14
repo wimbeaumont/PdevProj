@@ -41,7 +41,7 @@
 // globals for char control 
 bool  Get_Result = false ;
 bool  Always_Result = false ;
-bool  STAYLOOP =true;
+
 
 
 int main(void) { 
@@ -93,10 +93,9 @@ int main(void) {
 	// socket setup done 	
 
 
-   while(1){
 
     int lc2=0;  
-
+    bool  STAYLOOP =true;
     while(STAYLOOP ) {
     	// socket waiting
     	if (listen(server_fd, 3) < 0) {  perror("listen");   exit(EXIT_FAILURE);	 }
@@ -108,7 +107,9 @@ int main(void) {
   		//printf("This is from the client : %s length %d  expect %d \n\r",buffer,strlen(buffer),valread );
 	  	if (valread > 0) {
 	  		env_scpi_execute_command( buffer, valread);
+
 	  		strcpy(message,	env_get_result());
+	  		if( strcmp( message, "STOP done") == 0 ) STAYLOOP = false;
 	  		if(strlen(message)== 0) { strcpy(message, "wrong SCPI cmd");}
 	  	} else {
 	  		strcpy(message, "message is zerro");
@@ -121,9 +122,9 @@ int main(void) {
   	  	
 	  	lc2++;
   } //while stayloop
- 
+
 
  
- }// while 1  
+
     
 } // end main 
