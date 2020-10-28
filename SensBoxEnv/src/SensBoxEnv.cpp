@@ -21,10 +21,11 @@
  *  0.5   Apr 2020 9 works with RP  good version for debuging 
  *  0.6   Apr 2020 10 start to optimize for use, works with simpe socket communication
  *  0.7   forked fro sensboxenv simple , add scpi
+ *  1.0   added dummy reading env_scpiparser skipping i2c init
  
  */ 
 
-#define SENSBOXENVVER "0.7"
+#define SENSBOXENVVER "1.0"
 
 
 #include <cstdio>
@@ -61,12 +62,16 @@ int main(void) {
 
 	printf("Check Env  program version %s, compile date %s time %s\n\r",SENSBOXENVVER,__DATE__,__TIME__);
 
+#if defined __DUMMY__ 
+     printf("skip init i2c\n\r");
+#else 
 	// initialize the I2C devices   
     int status=init_i2c_dev();
     if ( status ){
     	printf("failed to init i2c devices returns %d \n\r",status);
     	return -1;
     }
+#endif
     scpi_setup();// initialize the parser
 
     // Creating socket file descriptor 

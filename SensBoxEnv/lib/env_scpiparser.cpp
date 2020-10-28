@@ -1,7 +1,7 @@
 /*============================================================================
  Name        : env_scpiparser.cpp
  Author      : Wim
- Version     : V1.0
+ Version     : V2.0
  Copyright   :
  Description : SCPI parser  for the environment sensor server
 Copyright (c) 2020 Wim Beaumont
@@ -25,7 +25,10 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-
+version history 
+V 1.0  used on the Raspberry Pi
+V 2.0  targeting to work with an mbed ( serial ) interface , but this version only works with dummy 
+       the this_readtemperature is a patch and should been done on the make ( cmake) level to provide an dummy external readme 
 
 
 */
@@ -37,11 +40,23 @@ SOFTWARE.
 
 struct scpi_parser_context ctx;
 
+#if defined  __DUMMY__ 
+
+float this_read_temperature( int ) { return 21.34; }
+float this_read_humidity(void) {return 30.4; }
+float this_read_luminosity(void) {return 0; }
+
+#else 
 
 extern  float read_temperature( int );
 extern  float read_humidity(void);
 extern  float read_luminosity(void);
 
+float this_read_temperature( int i ) { return read_temperature( i); }
+float this_read_humidity(void) {return read_humidity(); }
+float this_read_luminosity(void) {return read_luminosity(); }
+
+#endif 
 
 
 scpi_error_t identify(struct scpi_parser_context* context,struct scpi_token* command);
@@ -115,7 +130,7 @@ scpi_error_t send_stop(struct scpi_parser_context* context,struct scpi_token* co
 scpi_error_t get_temperature_ch0(struct scpi_parser_context* context,struct scpi_token* command) {
 	float temperature;
 
-	temperature= read_temperature(0);
+	temperature= this_read_temperature(0);
 
 	add2resultf(temperature);
 	scpi_free_tokens(command);
@@ -125,7 +140,7 @@ scpi_error_t get_temperature_ch0(struct scpi_parser_context* context,struct scpi
 scpi_error_t get_temperature_ch1(struct scpi_parser_context* context,struct scpi_token* command) {
 	float temperature;
 
-	temperature= read_temperature(1);
+	temperature= this_read_temperature(1);
 
 	add2resultf(temperature);
 	scpi_free_tokens(command);
@@ -134,7 +149,7 @@ scpi_error_t get_temperature_ch1(struct scpi_parser_context* context,struct scpi
 scpi_error_t get_temperature_ch2(struct scpi_parser_context* context,struct scpi_token* command) {
 	float temperature;
 
-	temperature= read_temperature(2);
+	temperature= this_read_temperature(2);
 
 	add2resultf(temperature);
 	scpi_free_tokens(command);
@@ -146,7 +161,7 @@ scpi_error_t get_temperature_ch2(struct scpi_parser_context* context,struct scpi
  * Read the humidity
  */
 scpi_error_t get_humidity(struct scpi_parser_context* context,struct scpi_token* command) {
-	float humidity=read_humidity();
+	float humidity=this_read_humidity();
 
 
 	add2resultf(humidity);
@@ -158,7 +173,7 @@ scpi_error_t get_humidity(struct scpi_parser_context* context,struct scpi_token*
  * Read the luminosity
  */
 scpi_error_t get_luminosity(struct scpi_parser_context* context,struct scpi_token* command) {
-	float luminosity= read_luminosity();
+	float luminosity= this_read_luminosity();
 
 
 	add2resultf(luminosity);
@@ -186,7 +201,7 @@ scpi_error_t get_temperature(struct scpi_parser_context* context,struct scpi_tok
 	} else { chan=0;}  // no parameter given
 	if( chan > 2 ) chan=2; // unsigned so can not  < 0
 	float temperature=0;
-	temperature=read_temperature(chan);
+	temperature=this_read_temperature(chan);
 	add2resultf(temperature);
 	scpi_free_tokens(command);
 	return SCPI_SUCCESS;
@@ -218,7 +233,7 @@ scpi_error_t get_temperature_ch(struct scpi_parser_context* context,struct scpi_
 
 	 float temperature=0;
 	//printf("read temperature for ch : %d \n\r", chan);
-	temperature=read_temperature(chan);
+	temperature=this_read_temperature(chan);
 	//printf("got  temperature  %f for ch : %d \n\r",temperature , chan );
 	add2resultf(temperature);
 	//printf("added temperature  %f for ch : %d to result \n\r",temperature , chan );
