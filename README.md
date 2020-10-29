@@ -24,8 +24,10 @@ The projects
 *   LTC2633_app    just some trails 
 *   SiPmCtrl  this is for a PCB to which a SiPm can be connected, containing amplifiers discriminator and bias . The LTC2633 is used to to set levels
 *   LinuxI2Ctest  to check some I2C functions  ( with a oscilloscope) 
-*   SensBoxEnvSimple  readout a a number of sensors are response with one string containing all the measurements on any request
+*   SensBoxEnvSimple  readout a a number of sensors are response with one string containing all the measurements on any request communicaton with sockets to a cleint 
 *   SensBoxEnv , readout the same sensors as SensBoxEnvSimple but wait for a scpi formated command to respond with the info requested by the command. 
+*   SensBoxEnvMbed  fork of the SensBoxEnv for MBED  (KL025Z )  communication via serial interface
+*   SensBoxEnvSer   fork of SensBox, translation between socket and serial 
 
 
 

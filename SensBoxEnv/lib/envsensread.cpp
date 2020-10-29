@@ -3,31 +3,72 @@
  *
  *  Created on: Apr 29, 2020
  *      Author: wimb
+ *
+ *  try to get it also working for MBED 
+ 
  */
 
+// OS / platform  specific  configs 
+#if defined  __MBED__ 
+#define  OS_SELECT "MBED" 
 
+#include "mbed.h"
 
+#if   defined (TARGET_KL25Z) || defined (TARGET_KL46Z)
+  PinName const SDA = PTE0;
+  PinName const SCL = PTE1;
+#elif defined (TARGET_KL05Z)
+  PinName const SDA = PTB4;
+  PinName const SCL = PTB3;
+#elif defined (TARGET_K20D50M)
+  PinName const SDA = PTB1;
+  PinName const SCL = PTB0;
+#else
+  #error TARGET NOT DEFINED
+#endif
+/* serial device is already defined on the main program 
+#if  MBED_MAJOR_VERSION > 5 
+BufferedSerial pc(USBTX, USBRX);
+#else 
+Serial pc(USBTX, USBRX);
+#endif 
+*/
+#include "I2C.h"
+#include "MBEDI2CInterface.h"  
+MBEDI2CInterface mbedi2c( SDA, SCL); 
+MBEDI2CInterface* mbedi2cp=  &mbedi2c ;
 
+//------------------ end MBED specific config
+#elif defined __LINUX__
 
-#if defined __LINUX__
-#define  OS_SELECT "linux_i2c"
+#define  OS_SELECT "linux_i2c" 
+
+#include <cstdio>
+#include <cstdlib>
 #include "LinuxI2CInterface.h"
 
-char *filename = (char*)"/dev/i2c-1";  //hard coded for the moment
+char *filename = (char*)"/dev/i2c-1";  //hard coded for the moment 
 LinuxI2CInterface  mbedi2c(filename);
 LinuxI2CInterface* mbedi2cp= &mbedi2c;
 
 //------------------ end Linux I2C specific config
-#else
-#define  OS_SELECT "linux_dummy"
+#else 
+#define  OS_SELECT "linux_dummy" 
+
+#include <cstdio>
+#include <cstdlib>
 #include "DummyI2CInterface.h"
 DummyI2CInterface  mbedi2c;
 DummyI2CInterface* mbedi2cp= &mbedi2c;
+
+#endif  // __MBED__ 
+//------------------ end Linux dummy specific config
+#ifndef OS_SELECT 
+#define OS_SELECT "linux_dummy" 
 #endif
-#ifndef OS_SELECT
-#define OS_SELECT "linux_dummy"
-#endif
-// --- end platform specific configs
+// --- end platform specific configs 
+
+
 
 #include <stdio.h>
 
@@ -51,11 +92,11 @@ void wait_for_ms(int nr){ i2cdev->wait_for_ms(nr);};
 int get_status(void){return status;}
 
 int init_i2c_dev(void) {
-	printf(" envsensread compiled for  %s \n\r", OS_SELECT);
+	//printf(" envsensread compiled for  %s \n\r", OS_SELECT);
  	 int status=shs.get_status( );
  	 if(status)  {
- 		 printf("get error %d after init humidity \n\r", status);
- 		 printf ( "HTS221  lib version :%s\n\r ",shs.getversioninfo());
+ 		 //printf("get error %d after init humidity \n\r", status);
+ 		 //printf ( "HTS221  lib version :%s\n\r ",shs.getversioninfo());
  		 return status -200;
  	 }
  	 //printf ( "HTS221 lib version :%s\n\r ",shs.getversioninfo());
@@ -64,7 +105,7 @@ int init_i2c_dev(void) {
 
 	 
  	  status=luxm.get_status( );
- 	 if( status) {    printf("get error %d after init \n\r", status);
+ 	 if( status) {  //  printf("get error %d after init \n\r", status);
  	 	 status=status-100;
  	 	 return status;
  	 }
@@ -77,7 +118,7 @@ int init_i2c_dev(void) {
       	  //printf( "Taddr %x , Eaddr %x \n\r ", tid[lc].getTaddr(),tid[lc].getEaddr());
  		 status=tid[lc].err_status ;
  		 if(  status){
- 			 printf("reading config registers failed got status  \n\r",status);
+ 			 //printf("reading config registers failed got status %d \n\r",status);
              if ( tid[lc].err_status== -20 ) {   tid[lc].err_status=0 ; status=0; }
              else {return status-200 - lc*100;} //  major failure
  		 }
