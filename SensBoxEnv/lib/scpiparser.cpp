@@ -31,6 +31,7 @@ SOFTWARE.
 #include <stdlib.h>
 #include <ctype.h>
 
+#include "mbed_stats.h"
 
 #include "scpiparser.h"
 
@@ -99,14 +100,34 @@ system_error(struct scpi_parser_context* ctx, struct scpi_token* command)
 void
 scpi_init(struct scpi_parser_context* ctx)
 {
+	mbed_stats_heap_t heap_stats;
+	
+	printf("start scpi init \n\r");
+	
 	struct scpi_command* system;
 	struct scpi_command* error;
 	
-	ctx->command_tree = (struct scpi_command*)malloc(sizeof(struct scpi_command));
+	mbed_stats_heap_get(&heap_stats);
+    printf("Start; Current heap: %lu\n", heap_stats.current_size);
+    printf("Start; Max heap size: %lu\n", heap_stats.max_size);
 	
+	
+	ctx->command_tree = (struct scpi_command*)malloc(sizeof(struct scpi_command));
+	printf("start scpi init after malloc  %d\n\r",sizeof(struct scpi_command));
+	if ( ctx->command_tree == NULL  ) { printf("malloc returns null \n\r"); while(1) { } }
+	mbed_stats_heap_get(&heap_stats);
+    printf(" Current heap: %lu\n", heap_stats.current_size);
+    printf("Max heap size: %lu\n", heap_stats.max_size);
+	printf("Start; total heap size: %lu\n", heap_stats.total_size);
+	printf("Start; reserved total heap size: %lu\n", heap_stats.reserved_size);
+	printf("Start; all cnt heap  : %lu\n", heap_stats.alloc_cnt);
+	printf("Start; fail cnt heap  : %lu\n", heap_stats.alloc_fail_cnt);
+	
+	printf("start scpi init after malloc1  \n\r");
+	printf("start scpi init after malloc2  \n\r");
 	ctx->command_tree->long_name = NULL;
 	ctx->command_tree->long_name_length = 0;
-	
+	printf("start scpi init after malloc3  \n\r");
 	ctx->command_tree->short_name = NULL;
 	ctx->command_tree->short_name_length = 0;
 	
@@ -114,14 +135,17 @@ scpi_init(struct scpi_parser_context* ctx)
 	ctx->command_tree->next = NULL;
 	ctx->command_tree->children = NULL;
 	
+	printf("start reg scpi cmd sys\n\r");
 	system = scpi_register_command(
 				ctx->command_tree, SCPI_CL_CHILD, "SYSTEM", 6,
 												  "SYST", 4, NULL);
 												  
+	printf("start reg scpi err cmd\n\r");
 	error = scpi_register_command(
 				system, SCPI_CL_CHILD, "ERROR", 5,
 									   "ERR", 3, NULL);
 									   
+    printf("start reg scpi err? cmd\n\r");
 	scpi_register_command(
 				system, SCPI_CL_CHILD, "ERROR?", 6,
 									   "ERR?", 4, system_error);
@@ -134,10 +158,10 @@ scpi_init(struct scpi_parser_context* ctx)
 }
 
 struct scpi_token*
-scpi_parse_string(const char* str, size_t length)
+scpi_parse_string(const char* str, size_t lengthin)
 {
 	int i;
-	
+	int length = (int) lengthin;
 	struct scpi_token* head;
 	struct scpi_token* tail;
 	
@@ -361,9 +385,10 @@ scpi_free_tokens(struct scpi_token* start)
 }
 
 struct scpi_numeric
-scpi_parse_numeric(const char* str, size_t length, float default_value, float min_value, float max_value)
+scpi_parse_numeric(const char* str, size_t inlength, float default_value, float min_value, float max_value)
 {
 	int i;
+	int length=(int) inlength;
 	float mantissa;
 	int state;
 	int sign;

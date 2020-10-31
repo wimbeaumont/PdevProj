@@ -75,8 +75,9 @@ void scpi_setup() {
 	struct scpi_command* meas_temp;
 
 	/* First, initialise the parser. */
+	printf("start scpi init \n\r");
 	scpi_init(&ctx);
-
+	printf("scpi init done \n\r");
 	/*
 	 * After initialising the parser, we set up the command tree.  Ours is
 	 *
@@ -101,6 +102,7 @@ void scpi_setup() {
 	scpi_register_command(meas_temp, SCPI_CL_CHILD, "CHANNEL#", 6, "CH#", 2,get_temperature_ch);
 	scpi_register_command(measure, SCPI_CL_CHILD, "HUMIDITY?", 9, "HUMI?", 5,get_humidity);
 	scpi_register_command(measure, SCPI_CL_CHILD, "LUMINOSITY?", 11, "LUMI?", 5,get_luminosity);
+	printf("scpi command register done \n\r");
 
 
 

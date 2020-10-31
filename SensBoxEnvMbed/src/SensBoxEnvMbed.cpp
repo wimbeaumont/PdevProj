@@ -17,26 +17,32 @@
 
  *  Version history :
  *  0.1   inital version form from SensBoxEnv  for MBED ,  ( not other platform support ) 
+ *  0.4x   checking with hardware 
  
  */ 
 
-#define SENSBOXENVMBEDVER "1.0"
+#define SENSBOXENVMBEDVER "0.61"
 #if defined  __MBED__ 
 #define  OS_SELECT "MBED" 
 
 #include "mbed.h"
-
+#include "mbed_stats.h"
 // i2c devices are defined at a lower level ( envsensread.cpp)
 
-#if  MBED_MAJOR_VERSION > 5 
-BufferedSerial pc(USBTX, USBRX);
-#else 
-Serial pc(USBTX, USBRX);
-#endif 
-#endif //__MBED__ 
 
-#include <cstdio>
-#include <cstdlib>     // atof 
+DigitalOut rled(LED1);
+DigitalOut gled(LED2);
+DigitalOut bled(LED3);
+
+#else //end __MBED__ 
+
+int rled ;
+int gled ;
+int bled ;
+#endif //
+
+#include <stdio.h>
+#include <stdlib.h>     // atof 
 #include <string.h> 
 #include "envsensread.h"
 #include "env_scpiparser.h"
@@ -51,26 +57,53 @@ bool  Always_Result = false ;
 
 int main(void) { 
 
+    mbed_stats_heap_t heap_stats;
+mbed_stats_heap_get(&heap_stats);
+    printf("Start; Current heap: %lu\n", heap_stats.current_size);
+    printf("Start; Max heap size: %lu\n", heap_stats.max_size);
+	printf("Start; total heap size: %lu\n", heap_stats.total_size);
+	printf("Start; reserved total heap size: %lu\n", heap_stats.reserved_size);
+	printf("Start; all cnt heap  : %lu\n", heap_stats.alloc_cnt);
+
+rled=1;bled=1;gled=1;
    char buffer[1024] = {0};  // receive buffer 
    char message[1024];
    int valread=0;
-	//printf("Check Env  program version %s, compile date %s time %s\n\r",SENSBOXENVMBEDVER,__DATE__,__TIME__);
-
+   mbed_stats_heap_get(&heap_stats);
+    printf("Start; Current heap: %lu\n", heap_stats.current_size);
+    printf("Start; Max heap size: %lu\n", heap_stats.max_size);
+    printf("Start; reserved total heap size: %lu\n", heap_stats.reserved_size);
+   printf("SensboxEnvMbed   program version %s, compile date %s time %s\n\r",SENSBOXENVMBEDVER,__DATE__,__TIME__);
+/*
 #if defined __DUMMY__ 
      printf("skip init i2c\n\r");
 #else 
+	*/
 	// initialize the I2C devices   
     int status=init_i2c_dev();
+	printf("i2cinit done with status %d \n\r",status);
+	mbed_stats_heap_get(&heap_stats);
+    printf("Start; Current heap: %lu\n", heap_stats.current_size);
+    printf("Start; Max heap size: %lu\n", heap_stats.max_size);
+
     if ( status ){
-    	//printf("failed to init i2c devices returns %d \n\r",status);
-    	return -1;
+		while (1) {
+			rled=0;
+			wait_for_ms(500);
+			printf("failed to init i2c devices returns %d \n\r",status);    	
+			rled=1;
+			wait_for_ms(500);
+		}
     }
-#endif
+//#endif
+	printf("start init scpi parser \n\r"); 
     scpi_setup();// initialize the parser
+	printf("init scpi parser done \n\r"); 
 
     int lc2=0;  
     bool  STAYLOOP =true;
     while(STAYLOOP ) {
+		printf("wait for input \n\r");
     	scanf("%s",buffer);
        	// buffer[valread]='\0'; assume end with \0
   		//printf("This is from the client : %s length %d  expect %d \n\r",buffer,strlen(buffer),valread );
