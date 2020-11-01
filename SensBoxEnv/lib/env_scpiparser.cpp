@@ -46,7 +46,7 @@ float this_read_temperature( int ) { return 21.34; }
 float this_read_humidity(void) {return 30.4; }
 float this_read_luminosity(void) {return 0; }
 
-#else 
+ #else 
 
 extern  float read_temperature( int );
 extern  float read_humidity(void);
@@ -57,7 +57,6 @@ float this_read_humidity(void) {return read_humidity(); }
 float this_read_luminosity(void) {return read_luminosity(); }
 
 #endif 
-
 
 scpi_error_t identify(struct scpi_parser_context* context,struct scpi_token* command);
 scpi_error_t send_stop(struct scpi_parser_context* context,struct scpi_token* command);
@@ -75,9 +74,8 @@ void scpi_setup() {
 	struct scpi_command* meas_temp;
 
 	/* First, initialise the parser. */
-	printf("start scpi init \n\r");
 	scpi_init(&ctx);
-	printf("scpi init done \n\r");
+
 	/*
 	 * After initialising the parser, we set up the command tree.  Ours is
 	 *
@@ -102,7 +100,6 @@ void scpi_setup() {
 	scpi_register_command(meas_temp, SCPI_CL_CHILD, "CHANNEL#", 6, "CH#", 2,get_temperature_ch);
 	scpi_register_command(measure, SCPI_CL_CHILD, "HUMIDITY?", 9, "HUMI?", 5,get_humidity);
 	scpi_register_command(measure, SCPI_CL_CHILD, "LUMINOSITY?", 11, "LUMI?", 5,get_luminosity);
-	printf("scpi command register done \n\r");
 
 
 
@@ -115,7 +112,7 @@ void scpi_setup() {
 scpi_error_t identify(struct scpi_parser_context* context,struct scpi_token* command) {
 	scpi_free_tokens(command);
 
-	add2result("EnvServ V1.2");
+	add2result("EnvServ V1.3");
 	return SCPI_SUCCESS;
 }
 

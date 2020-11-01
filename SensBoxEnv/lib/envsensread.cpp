@@ -92,16 +92,16 @@ void wait_for_ms(int nr){ i2cdev->wait_for_ms(nr);};
 int get_status(void){return status;}
 
 int init_i2c_dev(void) {
-	printf(" envsensread compiled for  %s \n\r", OS_SELECT);
+	//printf(" envsensread compiled for  %s \n\r", OS_SELECT);
  	 int status=shs.get_status( );
  	 if(status)  {
  		 //printf("get error %d after init humidity \n\r", status);
  		 //printf ( "HTS221  lib version :%s\n\r ",shs.getversioninfo());
  		 return status -200;
  	 }
- 	 printf ( "HTS221 lib version :%s\n\r ",shs.getversioninfo());
+ 	 //printf ( "HTS221 lib version :%s\n\r ",shs.getversioninfo());
  	 int id=(int) shs.ReadID();
- 	 printf("Who Am I returns %02x \n\r", id);
+ 	 //printf("Who Am I returns %02x \n\r", id);
 
 	 
  	  status=luxm.get_status( );
@@ -112,13 +112,13 @@ int init_i2c_dev(void) {
  	 else {
  		 luxm.set_integrationtime(1000); // > max
  		 luxm.set_gain(3); // > max
-		 printf ( "VEML770 lib version :%s\n\r ",luxm.getversioninfo());
+		// printf ( "VEML770 lib version :%s\n\r ",luxm.getversioninfo());
  	 }
  	 for ( int lc=0 ; lc < NrTsens ; lc++) {
-      	 printf( "Taddr %x , Eaddr %x \n\r ", tid[lc].getTaddr(),tid[lc].getEaddr());
+      	 //printf( "Taddr %x , Eaddr %x \n\r ", tid[lc].getTaddr(),tid[lc].getEaddr());
  		 status=tid[lc].err_status ;
  		 if(  status){
- 			 printf("reading config registers failed got status %d \n\r",status);
+ 			 //printf("reading config registers failed got status %d \n\r",status);
              if ( tid[lc].err_status== -20 ) {   tid[lc].err_status=0 ; status=0; }
              else {return status-200 - lc*100;} //  major failure
  		 }
@@ -130,7 +130,7 @@ float read_temperature (int  ch){
 	float Temp;
 	if ( ch >= 0 && ch < NrTsens ){
         Temp=tid[ch].getTemperature( );
-	} else if ( ch == 3 ){
+	} else if ( ch == 2 ){
         	status=shs.GetTemperature(&Temp);
         	//printf("after read humidityT %d  \n\r", status);
 		} else { Temp=-274; }

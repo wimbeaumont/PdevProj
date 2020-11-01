@@ -89,6 +89,8 @@ target_include_directories(applib  PUBLIC  ../../PdevUtils/scpi-parser/inc  ${de
 # collect all main programs 
 file(GLOB_RECURSE ALLPROGS  ../*/src/*.cpp)
 
+# MBED specific program 
+list(REMOVE_ITEM ALLPROGS "${CMAKE_CURRENT_SOURCE_DIR}/../SensBoxEnvMbed/src/SensBoxEnvMbed.cpp"  )
 
 
 #get the incl list for the apll specific libs 

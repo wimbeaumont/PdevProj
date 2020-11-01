@@ -26,7 +26,7 @@
 #define  OS_SELECT "MBED" 
 
 #include "mbed.h"
-#include "mbed_stats.h"
+
 // i2c devices are defined at a lower level ( envsensread.cpp)
 
 
@@ -57,67 +57,36 @@ bool  Always_Result = false ;
 
 int main(void) { 
 
-    mbed_stats_heap_t heap_stats;
-mbed_stats_heap_get(&heap_stats);
-    printf("Start; Current heap: %lu\n", heap_stats.current_size);
-    printf("Start; Max heap size: %lu\n", heap_stats.max_size);
-	printf("Start; total heap size: %lu\n", heap_stats.total_size);
-	printf("Start; reserved total heap size: %lu\n", heap_stats.reserved_size);
-	printf("Start; all cnt heap  : %lu\n", heap_stats.alloc_cnt);
-
-rled=1;bled=1;gled=1;
-   char buffer[1024] = {0};  // receive buffer 
-   char message[1024];
+   rled=1;bled=1;gled=1;
+   char buffer[512] = {0};  // receive buffer 
+   char* message= buffer;
    int valread=0;
-   mbed_stats_heap_get(&heap_stats);
-    printf("Start; Current heap: %lu\n", heap_stats.current_size);
-    printf("Start; Max heap size: %lu\n", heap_stats.max_size);
-    printf("Start; reserved total heap size: %lu\n", heap_stats.reserved_size);
-   printf("SensboxEnvMbed   program version %s, compile date %s time %s\n\r",SENSBOXENVMBEDVER,__DATE__,__TIME__);
-/*
-#if defined __DUMMY__ 
-     printf("skip init i2c\n\r");
-#else 
-	*/
+
 	// initialize the I2C devices   
     int status=init_i2c_dev();
-	printf("i2cinit done with status %d \n\r",status);
-	mbed_stats_heap_get(&heap_stats);
-    printf("Start; Current heap: %lu\n", heap_stats.current_size);
-    printf("Start; Max heap size: %lu\n", heap_stats.max_size);
-
-    if ( status ){
-		while (1) {
-			rled=0;
-			wait_for_ms(500);
-			printf("failed to init i2c devices returns %d \n\r",status);    	
-			rled=1;
-			wait_for_ms(500);
-		}
-    }
-//#endif
-	printf("start init scpi parser \n\r"); 
+    //printf("i2cinit done with status %d \n\r",status);
+	
     scpi_setup();// initialize the parser
-	printf("init scpi parser done \n\r"); 
-
     int lc2=0;  
     bool  STAYLOOP =true;
     while(STAYLOOP ) {
-		printf("wait for input \n\r");
-    	scanf("%s",buffer);
+    	//int buflength=(int) sizeof(buffer);
+    	scanf(" %512[^\n]s",buffer);// read unitl \n  the space before % is important  512 
+   
        	// buffer[valread]='\0'; assume end with \0
   		//printf("This is from the client : %s length %d  expect %d \n\r",buffer,strlen(buffer),valread );
 		valread=strlen(buffer);
+		//printf("got message nr %d ,  %s with length %d\n\r",lc2,buffer, valread);
 	  	if (valread > 0) {
 	  		env_scpi_execute_command( buffer, valread);
 	  		strcpy(message,	env_get_result());
-	  		if( strcmp( message, "STOP done") == 0 ) {STAYLOOP = false;}
+	  		//if( strcmp( message, "STOP done") == 0 ) {STAYLOOP = false;}
 	  		if(strlen(message)== 0) { strcpy(message, "wrong SCPI cmd");}
 	  	} else {
 	  		strcpy(message, "message is zerro");
 	  	}
 	  	//printf( "will send %s length %d \n\r ", message ,strlen(message)  );
-	  	printf("%s", message );
+	  	printf("%s\n\r", message );//need new line for the receiver , is waiting for that 
 		//printf("Have sent message %s\n\r ", message);
     
 	  	wait_for_ms(100);

@@ -1,7 +1,7 @@
 /*
  *
  *
- * added the Serial class so it communicate with strings no direct with the hardware channel
+ * added the SSerial class so it communicate with strings no direct with the hardware channel
  * will be used for a server based on sockets
  * Copyright (c) 2020 Willem  Beaumont Universiteit Antwerpen
  *
@@ -31,8 +31,6 @@ SOFTWARE.
 #include <stdlib.h>
 #include <ctype.h>
 
-#include "mbed_stats.h"
-
 #include "scpiparser.h"
 
 #ifdef __cplusplus
@@ -43,7 +41,7 @@ SOFTWARE.
 
 
   class CmdStr {
-  	char stringbuffer[2500];
+  	char stringbuffer[512];
 
   	public :
   		CmdStr (void ){};
@@ -77,21 +75,21 @@ SOFTWARE.
   };
 
 
-CmdStr Serial;
-char* get_result(void) { return  Serial.get_parse_result ();};
-void add2result(const char* resmessage){Serial.add2parse_result(resmessage);} ;
-void add2resultf(float f ){Serial.print(f);} ;
-void add2resulti(int i ){Serial.print(i);} ;
+CmdStr SSerial;
+char* get_result(void) { return  SSerial.get_parse_result ();};
+void add2result(const char* resmessage){SSerial.add2parse_result(resmessage);} ;
+void add2resultf(float f ){SSerial.print(f);} ;
+void add2resulti(int i ){SSerial.print(i);} ;
 
 static scpi_error_t
 system_error(struct scpi_parser_context* ctx, struct scpi_token* command)
 {
 	struct scpi_error* error_s = scpi_pop_error(ctx);
 	
-	Serial.print(error_s->id);
-        Serial.print(",\"");
-        Serial.write((const uint8_t*)error_s->description, error_s->length);
-	Serial.println("\"");
+	SSerial.print(error_s->id);
+        SSerial.print(",\"");
+        SSerial.write((const uint8_t*)error_s->description, error_s->length);
+	SSerial.println("\"");
 
 	scpi_free_tokens(command);
 	return SCPI_SUCCESS;
@@ -100,34 +98,13 @@ system_error(struct scpi_parser_context* ctx, struct scpi_token* command)
 void
 scpi_init(struct scpi_parser_context* ctx)
 {
-	mbed_stats_heap_t heap_stats;
-	
-	printf("start scpi init \n\r");
-	
 	struct scpi_command* system;
 	struct scpi_command* error;
-	
-	mbed_stats_heap_get(&heap_stats);
-    printf("Start; Current heap: %lu\n", heap_stats.current_size);
-    printf("Start; Max heap size: %lu\n", heap_stats.max_size);
-	
-	
+
 	ctx->command_tree = (struct scpi_command*)malloc(sizeof(struct scpi_command));
-	printf("start scpi init after malloc  %d\n\r",sizeof(struct scpi_command));
-	if ( ctx->command_tree == NULL  ) { printf("malloc returns null \n\r"); while(1) { } }
-	mbed_stats_heap_get(&heap_stats);
-    printf(" Current heap: %lu\n", heap_stats.current_size);
-    printf("Max heap size: %lu\n", heap_stats.max_size);
-	printf("Start; total heap size: %lu\n", heap_stats.total_size);
-	printf("Start; reserved total heap size: %lu\n", heap_stats.reserved_size);
-	printf("Start; all cnt heap  : %lu\n", heap_stats.alloc_cnt);
-	printf("Start; fail cnt heap  : %lu\n", heap_stats.alloc_fail_cnt);
-	
-	printf("start scpi init after malloc1  \n\r");
-	printf("start scpi init after malloc2  \n\r");
 	ctx->command_tree->long_name = NULL;
 	ctx->command_tree->long_name_length = 0;
-	printf("start scpi init after malloc3  \n\r");
+
 	ctx->command_tree->short_name = NULL;
 	ctx->command_tree->short_name_length = 0;
 	
@@ -135,17 +112,15 @@ scpi_init(struct scpi_parser_context* ctx)
 	ctx->command_tree->next = NULL;
 	ctx->command_tree->children = NULL;
 	
-	printf("start reg scpi cmd sys\n\r");
 	system = scpi_register_command(
 				ctx->command_tree, SCPI_CL_CHILD, "SYSTEM", 6,
 												  "SYST", 4, NULL);
 												  
-	printf("start reg scpi err cmd\n\r");
 	error = scpi_register_command(
 				system, SCPI_CL_CHILD, "ERROR", 5,
 									   "ERR", 3, NULL);
 									   
-    printf("start reg scpi err? cmd\n\r");
+
 	scpi_register_command(
 				system, SCPI_CL_CHILD, "ERROR?", 6,
 									   "ERR?", 4, system_error);
@@ -347,7 +322,7 @@ scpi_execute_command(struct scpi_parser_context* ctx, const char* command_string
 {
 	struct scpi_command* command;
 	struct scpi_token* parsed_command;
-	Serial.clr();
+	SSerial.clr();
 	parsed_command = scpi_parse_string(command_string, length);
 	
 	command = scpi_find_command(ctx, parsed_command);

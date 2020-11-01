@@ -26,25 +26,30 @@
 #define PORT 9090 
 
 int serialportsetup() {
-int fd=open("/dev/ttyUSB0",O_RDWR | O_NOCTTY); //fd is locally defined but the open is static so also have to be cloes 
-	if(fd == ­1)
+int fd=open("/dev/serial/by-id/usb-MBED_MBED_CMSIS-DAP_020002033E103E53C3ECC3AB-if01",O_RDWR | O_NOCTTY); //fd is locally defined but the open is static so also have to be cloes 
+	if(fd ==-1)
      printf("\n  Error! in Opening ttyUSB0\n");
 	else{ 
 		printf("\n  ttyUSB0 Opened Successfully\n");
+		
 		struct termios SerialPortSettings;
 		tcgetattr(fd, &SerialPortSettings);//get current settings 
-		cfsetispeed(&SerialPortSettings,B9600);read speed 
-		cfsetospeed(&SerialPortSettings,B9600);write speed 
+		cfsetispeed(&SerialPortSettings,B9600);//read speed 
+		cfsetospeed(&SerialPortSettings,B9600);//write speed 
+		SerialPortSettings.c_cflag &= ~CSIZE ; // set char size mask to 0 
+		SerialPortSettings.c_cflag |=  CS8 ; // set char size to 8 
 		SerialPortSettings.c_cflag &= ~PARENB;   // No Parity
 		SerialPortSettings.c_cflag &= ~CSTOPB; //Stop bits = 1 
 		SerialPortSettings.c_cflag &= ~CRTSCTS; // no RTS .CTS 
-		SerialPortSettings.c_lflag &= ~(ECHO | ECHOE | EHONL) ; // Disable echo
-		SerialPortSettings.c_lflag |=   ICANON;// read full lines 
+		SerialPortSettings.c_lflag &= ~(ECHO | ECHOE | ECHONL) ; // Disable echo
+		SerialPortSettings.c_lflag |=   ICANON;// read  full lines 
 		SerialPortSettings.c_iflag &= ~(IXON | IXOFF | IXANY); // no flow control
 		//SerialPortSettings.c_iflag &= ~(IGNBRK|BRKINT|PARMRK|ISTRIP|INLCR|IGNCR|ICRNL); // Disable any specia not expected
 		tcsetattr(fd,TCSANOW,&SerialPortSettings); // write the settings to the hardware without waiting ( TCSANOW)
-		//SerialPortSettings.c_cc[VMIN]  = 0; /* Read 10 characters */   we wait for the newline 
-		SerialPortSettings.c_cc[VTIME] = 0;  /* Wait indefinitely for the moment   */ 
+		//SerialPortSettings.c_cc[VMIN]  = 0; // Read 10 characters   we wait for the newline 
+		SerialPortSettings.c_cc[VTIME] = 0;  // Wait indefinitely for the moment   
+		
+		
 	}
     return fd ;
 }
@@ -71,10 +76,7 @@ int main(void) {
 	
 //serial port 
 	int fd  = serialportsetup();
-	if ( fd == -1 ) exit(); 
-
-
-   scpi_setup();// initialize the parser
+	if ( fd == -1 ) exit(-1); 
 
     // Creating socket file descriptor 
     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) { 
@@ -110,18 +112,24 @@ int main(void) {
     		perror("accept");   	     exit(EXIT_FAILURE);
     	} // blocking socket
     	valread = read( new_socket , buffer, 1024);
-    	buffer[valread]='\0';
-  		//printf("This is from the client : %s length %d  expect %d \n\r",buffer,strlen(buffer),valread );
+    	printf("This is from the client : %s length %d  expect %d \n\r",buffer,(int)strlen(buffer),valread );
+    	buffer[valread++]='\n';//send a new line and include it 
+  	buffer[valread]='\0';//terminate string with \0   
+  	tcflush(fd, TCIOFLUSH);
 	  	if (valread > 0) {
-	  		bytes_written = write(fd,buffer,sizeof(buffer));
-			valread=read(fd, &message, sizeof(messsage));//get full return message 
-	  	} else { 		strcpy(message, "message is zerro");	}
+	  		write(fd,buffer,valread);
+			valread=read(fd, message, sizeof(message));//get full return message 
+			message[valread-1]='\0';	// messages is not terminated with \0 !!! overwrite newline
+			if( valread == 0) {
+				strcpy(message, "resp message is zerro");
+			}
+	  	} else { 		strcpy(message, "cmd message is zerro");	}
 		
-		//printf( "will send %s length %d reported %d \n\r ", message ,strlen(message)  ,valread);
+		printf( "will send %s length %d reported %d \n\r ", message ,(int)strlen(message)  ,valread);
 	  	send(new_socket , message , strlen(message) , 0 );
 		//printf("Have sent message %s\n\r ", message);
     
-	  	wait_us(100);
+	  	usleep(100000);
   	  	
 	  	lc2++;
   } //while stayloop
