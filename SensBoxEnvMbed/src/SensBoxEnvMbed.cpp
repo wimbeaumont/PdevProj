@@ -21,7 +21,7 @@
  
  */ 
 
-#define SENSBOXENVMBEDVER "0.61"
+#define SENSBOXENVMBEDVER "0.62"
 #if defined  __MBED__ 
 #define  OS_SELECT "MBED" 
 

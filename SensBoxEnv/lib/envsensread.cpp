@@ -4,7 +4,8 @@
  *  Created on: Apr 29, 2020
  *      Author: wimb
  *
- *  try to get it also working for MBED 
+ * 20201030 try to get it also working for MBED 
+ * 20201103 added reseti2c bus function not tested on hw 
  
  */
 
@@ -37,10 +38,9 @@ Serial pc(USBTX, USBRX);
 #include "MBEDI2CInterface.h"  
 MBEDI2CInterface mbedi2c( SDA, SCL); 
 MBEDI2CInterface* mbedi2cp=  &mbedi2c ;
-
+DigitalOut rst(PTB8,1);
 //------------------ end MBED specific config
 #elif defined __LINUX__
-
 #define  OS_SELECT "linux_i2c" 
 
 #include <cstdio>
@@ -50,7 +50,7 @@ MBEDI2CInterface* mbedi2cp=  &mbedi2c ;
 char *filename = (char*)"/dev/i2c-1";  //hard coded for the moment 
 LinuxI2CInterface  mbedi2c(filename);
 LinuxI2CInterface* mbedi2cp= &mbedi2c;
-
+int rst;
 //------------------ end Linux I2C specific config
 #else 
 #define  OS_SELECT "linux_dummy" 
@@ -60,7 +60,7 @@ LinuxI2CInterface* mbedi2cp= &mbedi2c;
 #include "DummyI2CInterface.h"
 DummyI2CInterface  mbedi2c;
 DummyI2CInterface* mbedi2cp= &mbedi2c;
-
+int rst;
 #endif  // __MBED__ 
 //------------------ end Linux dummy specific config
 #ifndef OS_SELECT 
@@ -148,4 +148,12 @@ float read_luminosity (void){
 	float  lux=luxm.get_lux (false);
 	status = luxm.get_status( );
 	return lux;
+}
+
+int reset_i2cbus(void) {
+	 rst=0; // full reset for MBED  with solder patch 
+ 	 i2cdev-> abort_transfer( ) ; // reset of the i2c bus in other case 
+	 i2cdev-> stop  ();
+
+	 return 0;
 }
