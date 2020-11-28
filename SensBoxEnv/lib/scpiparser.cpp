@@ -328,6 +328,8 @@ scpi_execute_command(struct scpi_parser_context* ctx, const char* command_string
 	command = scpi_find_command(ctx, parsed_command);
 	if(command == NULL)
 	{
+		// 20201128  mem leak when token is not found 
+		scpi_free_tokens(parsed_command);
 		return SCPI_COMMAND_NOT_FOUND;
 	}
 	

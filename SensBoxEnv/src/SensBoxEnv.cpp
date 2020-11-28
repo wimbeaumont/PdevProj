@@ -36,6 +36,7 @@
 #include <string.h> 
 #include "envsensread.h"
 #include "env_scpiparser.h"
+//#include <mcheck.h> 
 #define PORT 9090 
 
 
@@ -46,7 +47,7 @@ bool  Always_Result = false ;
 
 
 int main(void) { 
-   
+//   mtrace();
    //const int nr_Tsens=2;
 
 
@@ -72,7 +73,9 @@ int main(void) {
     	return -1;
     }
 #endif
-    scpi_setup();// initialize the parser
+#define HWVERSION "DUMMY"
+    char hwversion[]=HWVERSION; 
+    scpi_setup(hwversion);// initialize the parser
 
     // Creating socket file descriptor 
     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) { 
@@ -123,13 +126,14 @@ int main(void) {
 	  	send(new_socket , message , strlen(message) , 0 );
 		//printf("Have sent message %s\n\r ", message);
     
-	  	wait_for_ms(100);
+	  	close(new_socket);
   	  	
 	  	lc2++;
+	  
   } //while stayloop
 
 
- 
+//  muntrace();
 
     
 } // end main 

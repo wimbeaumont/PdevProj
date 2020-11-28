@@ -17,11 +17,12 @@
 
  *  Version history :
  *  0.1   inital version form from SensBoxEnv  for MBED ,  ( not other platform support ) 
- *  0.4x   checking with hardware 
- 
+ *  0.4x  checking with hardware 
+ *  0.6x  initial production version 
+ *  1.0   added hwversion ,  corrected memory leak in scpi parser 
  */ 
 
-#define SENSBOXENVMBEDVER "0.62"
+#define SENSBOXENVMBEDVER "1.0"
 #if defined  __MBED__ 
 #define  OS_SELECT "MBED" 
 
@@ -65,8 +66,8 @@ int main(void) {
 	// initialize the I2C devices   
     int status=init_i2c_dev();
     //printf("i2cinit done with status %d \n\r",status);
-	
-    scpi_setup();// initialize the parser
+    char hwversion[]=SENSBOXENVMBEDVER;	
+    scpi_setup( hwversion);// initialize the parser
     int lc2=0;  
     bool  STAYLOOP =true;
     while(STAYLOOP ) {
@@ -83,7 +84,7 @@ int main(void) {
 	  		//if( strcmp( message, "STOP done") == 0 ) {STAYLOOP = false;}
 	  		if(strlen(message)== 0) { strcpy(message, "wrong SCPI cmd");}
 	  	} else {
-	  		strcpy(message, "message is zerro");
+	  		strcpy(message, "MB message is zerro");
 	  	}
 	  	//printf( "will send %s length %d \n\r ", message ,strlen(message)  );
 	  	printf("%s\n\r", message );//need new line for the receiver , is waiting for that 

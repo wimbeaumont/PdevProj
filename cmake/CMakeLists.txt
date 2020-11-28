@@ -62,7 +62,7 @@ file(GLOB_RECURSE simplelibs  ../../PeripheralDevices/*.cpp  ../../PeripheralDev
 list(REMOVE_ITEM simplelibs "${CMAKE_CURRENT_SOURCE_DIR}/../../PeripheralDevices/MCP4728/MCP4728setaddr.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/../../PeripheralDevices/MCP4728/MCP4728setaddr.h")
 
 add_library(tstlib STATIC  ${simplelibs})
-target_compile_options(tstlib PUBLIC -D${TARGET_FLAG})
+target_compile_options(tstlib PUBLIC -g -D${TARGET_FLAG})
 target_include_directories(tstlib PUBLIC  ../../PeripheralDevices/DevInterfaces/)
 #message ( "${CMAKE_CURRENT_SOURCE_DIR}/../../PeripheralDevices/MCP4728//MCP4728setaddr.cpp" )
 
@@ -78,7 +78,7 @@ target_include_directories(scpiparserlib  PUBLIC  ../../PdevUtils/scpi-parser/in
 file(GLOB_RECURSE applliblist  ../*/lib/*.cpp  ../*/lib/*.h)
 #message("${applliblist}")
 add_library(applib STATIC  ${applliblist})
-target_compile_options(applib PUBLIC -D${TARGET_FLAG})
+target_compile_options(applib PUBLIC -g -D${TARGET_FLAG})
 target_include_directories(applib  PUBLIC  ../../PdevUtils/scpi-parser/inc  ${dev_incl_dirs} )
 
 

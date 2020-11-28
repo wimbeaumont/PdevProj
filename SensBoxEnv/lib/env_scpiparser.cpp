@@ -59,6 +59,7 @@ float this_read_luminosity(void) {return read_luminosity(); }
 #endif 
 
 scpi_error_t identify(struct scpi_parser_context* context,struct scpi_token* command);
+scpi_error_t gethwversion(struct scpi_parser_context* context,struct scpi_token* command);
 scpi_error_t send_stop(struct scpi_parser_context* context,struct scpi_token* command);
 scpi_error_t get_temperature(struct scpi_parser_context* context,struct scpi_token* command);
 scpi_error_t get_temperature_ch(struct scpi_parser_context* context,struct scpi_token* command);  // for channel given as parameter
@@ -67,12 +68,12 @@ scpi_error_t get_temperature_ch1(struct scpi_parser_context* context,struct scpi
 scpi_error_t get_temperature_ch2(struct scpi_parser_context* context,struct scpi_token* command);
 scpi_error_t get_luminosity(struct scpi_parser_context* context,struct scpi_token* command);
 scpi_error_t get_humidity(struct scpi_parser_context* context,struct scpi_token* command);
+char*  hwversion;
 
-void scpi_setup() {
-
+void scpi_setup(char* hwversion_ ) {
+	hwversion=hwversion_;
 	struct scpi_command* measure;
 	struct scpi_command* meas_temp;
-
 	/* First, initialise the parser. */
 	scpi_init(&ctx);
 
@@ -91,6 +92,7 @@ void scpi_setup() {
 	 *    :TEMP1?  -> get temperature of ch1   (or 0 or 2 )
 	 */
 	scpi_register_command(ctx.command_tree, SCPI_CL_SAMELEVEL, "*IDN?", 5,"*IDN?", 5, identify);
+	scpi_register_command(ctx.command_tree, SCPI_CL_SAMELEVEL, "*HWVer?", 7,"*HWver?", 7, gethwversion);
 	scpi_register_command(ctx.command_tree, SCPI_CL_SAMELEVEL, "*STOP", 5,"*STP", 3, send_stop);
 	measure = scpi_register_command(ctx.command_tree, SCPI_CL_CHILD, "MEASURE", 7, "MEAS", 4, NULL);
 	meas_temp=scpi_register_command(measure, SCPI_CL_CHILD, "TEMPERATURE?", 12, "TEMP?", 5,get_temperature);
@@ -111,14 +113,19 @@ void scpi_setup() {
  */
 scpi_error_t identify(struct scpi_parser_context* context,struct scpi_token* command) {
 	scpi_free_tokens(command);
+	add2result("EnvServ V1.4");
+	return SCPI_SUCCESS;
+}
 
-	add2result("EnvServ V1.3");
+
+scpi_error_t gethwversion(struct scpi_parser_context* context,struct scpi_token* command) {
+	scpi_free_tokens(command);
+	add2result(hwversion);
 	return SCPI_SUCCESS;
 }
 
 scpi_error_t send_stop(struct scpi_parser_context* context,struct scpi_token* command) {
 	scpi_free_tokens(command);
-
 	add2result("STOP done");
 	return SCPI_SUCCESS;
 }

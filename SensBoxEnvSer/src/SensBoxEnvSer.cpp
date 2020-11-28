@@ -6,10 +6,11 @@
 
  *  Version history :
  *  0.1   inital version not compiled not tested only principle 
+ *  1.2   added close ,  corrected message  '/0' pos
  
  */ 
 
-#define SENSBOXENVSERVER ".1"
+#define SENSBOXENVSERVER "1.2"
 
 
 #include <cstdio>
@@ -26,7 +27,8 @@
 #define PORT 9090 
 
 int serialportsetup() {
-int fd=open("/dev/serial/by-id/usb-MBED_MBED_CMSIS-DAP_020002033E103E53C3ECC3AB-if01",O_RDWR | O_NOCTTY); //fd is locally defined but the open is static so also have to be cloes 
+int fd=open("/dev/serial/by-id/usb-MBED_MBED_CMSIS-DAP_020002033E103E53C3ECC3AB-if01",O_RDWR | O_NOCTTY); //fd is locally defined but the open is static so also have to be closed
+//int fd=open("/dev/serial/by-id/usb-MBED_MBED_CMSIS-DAP_020002033E5B3E58C3A7C3A0-if01",O_RDWR | O_NOCTTY); 
 	if(fd ==-1)
      printf("\n  Error! in Opening ttyUSB0\n");
 	else{ 
@@ -112,6 +114,7 @@ int main(void) {
     		perror("accept");   	     exit(EXIT_FAILURE);
     	} // blocking socket
     	valread = read( new_socket , buffer, 1024);
+    	buffer[valread]='\0';//terminate string with \0   
     	printf("This is from the client : %s length %d  expect %d \n\r",buffer,(int)strlen(buffer),valread );
     	buffer[valread++]='\n';//send a new line and include it 
   	buffer[valread]='\0';//terminate string with \0   
@@ -119,19 +122,21 @@ int main(void) {
 	  	if (valread > 0) {
 	  		write(fd,buffer,valread);
 			valread=read(fd, message, sizeof(message));//get full return message 
-			message[valread-1]='\0';	// messages is not terminated with \0 !!! overwrite newline
+			//for ( int cc=0; cc < valread; cc++ ) { printf(" %02d",message[cc]) ;}
+			//printf("\n\r");
+			message[valread-2]='\0';	// messages is not terminated with \0 !!! overwrite newline
+			if( strcmp( message, "STOP done") == 0 ) STAYLOOP = false;
 			if( valread == 0) {
 				strcpy(message, "resp message is zerro");
 			}
 	  	} else { 		strcpy(message, "cmd message is zerro");	}
 		
-		printf( "will send %s length %d reported %d \n\r ", message ,(int)strlen(message)  ,valread);
+		printf( "will send %s length %d reported %d \n\r", message ,(int)strlen(message)  ,valread-2);
 	  	send(new_socket , message , strlen(message) , 0 );
 		//printf("Have sent message %s\n\r ", message);
-    
-	  	usleep(100000);
-  	  	
 	  	lc2++;
+    		close(new_socket); 	  	
+
   } //while stayloop
 
 close (fd) ;
