@@ -1,10 +1,10 @@
-This program is for a MBED processor . 
+This program is for a MBED processor. 
 
-It uses the serial port to exhange  environment sensor data , using a SCPI protocol 
+It uses the serial port to exhange  environment sensor data, using a SCPI protocol 
  
-Tested with mbed-cli  on linux and the KL25z  platform ( easist way to install is with python3 -m pip install mbed-cli ) 
+Tested with mbed-cli  on linux and the KL25z  platform (easiest way to install is with `python3 -m pip install mbed-cli`) 
 
-mbed-cli  is using a repository system, git by default.  This feature should be able to disable when starting a new project but seems not always to work .
+mbed-cli  is using a repository system, git by default.  This feature should be able to disable when starting a new project but seems not always to work.
 
 So I make a working directory 
 
@@ -23,7 +23,7 @@ To compile I use the command mbed compile -t GCC_ARM -m KL25z --source SensBoxEn
 
 The GCC ARM cross compiler is in the PATH variable. 
 
-The program is used together with SensBoxEnvSer that is in principle a socket to serial interface translater. 
+The program is used together with SensBoxEnvSer that is in principle a socket to serial interface translator. 
 
 
 
