@@ -20,9 +20,12 @@
  *  0.4x  checking with hardware 
  *  0.6x  initial production version 
  *  1.0   added hwversion ,  corrected memory leak in scpi parser 
+ *  1.1   scpi lib  corrected for float format overflow 
+ *  1.2   check without wait 
+ *  1.3   added VOLT support (reading MBED ADC A0)
  */ 
 
-#define SENSBOXENVMBEDVER "1.0"
+#define SENSBOXENVMBEDVER "1.3"
 #if defined  __MBED__ 
 #define  OS_SELECT "MBED" 
 
@@ -90,7 +93,7 @@ int main(void) {
 	  	printf("%s\n\r", message );//need new line for the receiver , is waiting for that 
 		//printf("Have sent message %s\n\r ", message);
     
-	  	wait_for_ms(100);
+	  	//wait_for_ms(1);
   	  	
 	  	lc2++;
   } //while stayloop
