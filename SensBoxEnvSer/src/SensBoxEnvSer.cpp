@@ -27,12 +27,13 @@
 #define PORT 9090 
 
 int serialportsetup() {
-int fd=open("/dev/serial/by-id/usb-MBED_MBED_CMSIS-DAP_020002033E103E53C3ECC3AB-if01",O_RDWR | O_NOCTTY); //fd is locally defined but the open is static so also have to be closed
-//int fd=open("/dev/serial/by-id/usb-MBED_MBED_CMSIS-DAP_020002033E5B3E58C3A7C3A0-if01",O_RDWR | O_NOCTTY); 
+#define SERPORT "/dev/ttyACM0"	
+int fd=open(SERPORT,O_RDWR | O_NOCTTY); //fd is locally defined but the open is static so also have to be closed
+
 	if(fd ==-1)
-     printf("\n  Error! in Opening ttyUSB0\n");
+     printf("\n  Error! in Opening %s\n",SERPORT);
 	else{ 
-		printf("\n  ttyUSB0 Opened Successfully\n");
+		printf("\n  %s Opened Successfully\n",SERPORT);
 		
 		struct termios SerialPortSettings;
 		tcgetattr(fd, &SerialPortSettings);//get current settings 

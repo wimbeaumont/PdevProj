@@ -5,9 +5,12 @@
  *      Author: wimb
  *
  * 20201030 try to get it also working for MBED 
- * 20201103 added reseti2c bus function not tested on hw 
+ * 20201103 added reseti2c bus function not tes
+ * 20210414 added ADC readout 
  
  */
+
+
 
 // OS / platform  specific  configs 
 #if defined  __MBED__ 
@@ -27,7 +30,7 @@
 #else
   #error TARGET NOT DEFINED
 #endif
-/* serial device is already defined on the main program 
+/* serial device is already defined in the main program 
 #if  MBED_MAJOR_VERSION > 5 
 BufferedSerial pc(USBTX, USBRX);
 #else 
@@ -36,6 +39,8 @@ Serial pc(USBTX, USBRX);
 */
 #include "I2C.h"
 #include "MBEDI2CInterface.h"  
+#include "ADC_MBED.h"
+
 MBEDI2CInterface mbedi2c( SDA, SCL); 
 MBEDI2CInterface* mbedi2cp=  &mbedi2c ;
 DigitalOut rst(PTB8,1);
@@ -46,7 +51,7 @@ DigitalOut rst(PTB8,1);
 #include <cstdio>
 #include <cstdlib>
 #include "LinuxI2CInterface.h"
-
+#include "ADCInterface.h"
 char *filename = (char*)"/dev/i2c-1";  //hard coded for the moment 
 LinuxI2CInterface  mbedi2c(filename);
 LinuxI2CInterface* mbedi2cp= &mbedi2c;
@@ -58,6 +63,8 @@ int rst;
 #include <cstdio>
 #include <cstdlib>
 #include "DummyI2CInterface.h"
+#include "ADCInterface.h"
+
 DummyI2CInterface  mbedi2c;
 DummyI2CInterface* mbedi2cp= &mbedi2c;
 int rst;
@@ -68,11 +75,7 @@ int rst;
 #endif
 // --- end platform specific configs 
 
-
-
 #include <stdio.h>
-
-#include "dev_interface_def.h"
 #include "AT30TSE75x_E.h"
 #include "hts221.h"
 #include "veml7700.h"  // differs from the MBED version
@@ -86,6 +89,14 @@ VEML7700 luxm ( i2cdev);  // so static global  in this file
 const int NrTsens=2;
 AT30TSE75x_E tid[NrTsens] ={ AT30TSE75x_E( i2cdev ,1), AT30TSE75x_E( i2cdev ,2)};
 HTS221 shs ( i2cdev, true, true ); // initialize with one shot .
+
+#if defined  __MBED__ 
+ADC_MBED adc(A0 ); 
+#else 
+ADCInterface adc;
+#endif 
+ 
+
 
 int status =0;
 void wait_for_ms(int nr){ i2cdev->wait_for_ms(nr);};
@@ -137,6 +148,12 @@ float read_temperature (int  ch){
 	return Temp;
 }
 
+float read_voltage( int ch) {
+	float volt;
+	adc.getVoltage(volt);// channel is not supported for ADC_MBED interface 
+	return volt;
+	
+}
 float read_humidity (void){
 	float hum;
 	status=shs.GetHumidity(&hum);

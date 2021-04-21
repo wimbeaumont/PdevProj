@@ -29,6 +29,8 @@ version history
 V 1.0  used on the Raspberry Pi
 V 2.0  targeting to work with an mbed ( serial ) interface , but this version only works with dummy 
        the this_readtemperature is a patch and should been done on the make ( cmake) level to provide an dummy external readme 
+V 2.2  add ADC / voltage support 
+
 
 
 */
@@ -45,16 +47,19 @@ struct scpi_parser_context ctx;
 float this_read_temperature( int ) { return 21.34; }
 float this_read_humidity(void) {return 30.4; }
 float this_read_luminosity(void) {return 0; }
+float this_read_voltage( int i ) { return  2.25;}
 
  #else 
 
 extern  float read_temperature( int );
 extern  float read_humidity(void);
 extern  float read_luminosity(void);
+extern  float read_voltage(int );
 
 float this_read_temperature( int i ) { return read_temperature( i); }
 float this_read_humidity(void) {return read_humidity(); }
 float this_read_luminosity(void) {return read_luminosity(); }
+float this_read_voltage( int i ) { return read_voltage( i); }
 
 #endif 
 
@@ -68,6 +73,7 @@ scpi_error_t get_temperature_ch1(struct scpi_parser_context* context,struct scpi
 scpi_error_t get_temperature_ch2(struct scpi_parser_context* context,struct scpi_token* command);
 scpi_error_t get_luminosity(struct scpi_parser_context* context,struct scpi_token* command);
 scpi_error_t get_humidity(struct scpi_parser_context* context,struct scpi_token* command);
+scpi_error_t get_voltage(struct scpi_parser_context* context,struct scpi_token* command);
 char*  hwversion;
 
 void scpi_setup(char* hwversion_ ) {
@@ -102,7 +108,7 @@ void scpi_setup(char* hwversion_ ) {
 	scpi_register_command(meas_temp, SCPI_CL_CHILD, "CHANNEL#", 6, "CH#", 2,get_temperature_ch);
 	scpi_register_command(measure, SCPI_CL_CHILD, "HUMIDITY?", 9, "HUMI?", 5,get_humidity);
 	scpi_register_command(measure, SCPI_CL_CHILD, "LUMINOSITY?", 11, "LUMI?", 5,get_luminosity);
-
+	scpi_register_command(measure, SCPI_CL_CHILD, "VOLTAGE?", 11, "VOLT?", 5,get_voltage);
 
 
 	//Serial.begin(9600);
@@ -113,7 +119,7 @@ void scpi_setup(char* hwversion_ ) {
  */
 scpi_error_t identify(struct scpi_parser_context* context,struct scpi_token* command) {
 	scpi_free_tokens(command);
-	add2result("EnvServ V1.4");
+	add2result("EnvServ V");add2result(ENV_SCPIPARSER_VER);
 	return SCPI_SUCCESS;
 }
 
@@ -129,6 +135,19 @@ scpi_error_t send_stop(struct scpi_parser_context* context,struct scpi_token* co
 	add2result("STOP done");
 	return SCPI_SUCCESS;
 }
+
+/**
+ *  Read the voltage of 
+*/ 
+scpi_error_t get_voltage(struct scpi_parser_context* context,struct scpi_token* command) {
+	float volt;
+	volt= this_read_voltage(0);
+	add2resultf(volt);
+	scpi_free_tokens(command);
+	return SCPI_SUCCESS;
+}
+
+
 
 /**
  * Read the temperature of ch 0
