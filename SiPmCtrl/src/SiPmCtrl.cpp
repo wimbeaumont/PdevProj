@@ -6,14 +6,15 @@
  *  V 1.0  : copied from LTC2633_tst.cpp 
  *  V 1.24  : working with the hardware simple increasing
  *  V 1.40  : version copied from LTC2633_app  ( v 1.36 )
- *  V 1.51  :  version work with RP and  SiPm board
- * (C) Wim Beaumont Universiteit Antwerpen 2019
+ *  V 1.31  :  corrected issue with addressing 
+ *  V 1.52  :  version work with RP and  SiPm board
+  * (C) Wim Beaumont Universiteit Antwerpen 2019
  *  License see
  *  https://github.com/wimbeaumont/PeripheralDevices/blob/master/LICENSE
  */ 
  
 
-#define SIPMCTRL "1.51"
+#define SIPMCTRL "1.52"
 
 
 #include "dev_interface_def.h"
@@ -127,7 +128,7 @@ int main(int argc, char *argv[]) {
 					else printf(" set DAC bias ch %d to %d \n\r", ch, int(volt));
 		}break;
 		case 'l' : { if ( ch == 0) ch=1; else ch=0;// hw channels are inverted 
-					errcode= biasctrl.setDACvalue(int(volt) ,ch);  
+					errcode= discr_lvl.setDACvalue(int(volt) ,ch);  
 					if (errcode ){
 						printf("failed to set Lvl value %d for HW channel %d errcode %d\n\r",int(volt) ,ch,errcode);
 					}
