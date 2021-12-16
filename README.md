@@ -40,10 +40,12 @@ The projects
 *   SensBoxEnvSimple  readout a a number of sensors are response with one string containing all the measurements on any request communication with sockets to a client 
 *   SensBoxEnv readout the same sensors as SensBoxEnvSimple but wait for a scpi formated command to respond with the info requested by the command. 
 *   SensBoxEnvSer fork of SensBox, translation between socket and serial 
+
  
  Specific for MBED only : 
 
 *   SensBoxEnvMbed  fork of the SensBoxEnv for MBED  (KL025Z )  communication via serial interface
+*   EnvChk  is a simple program that loops over a number of peripheral sensors or on request on continuous 
 
 mbed-cli  is using a repository system, git by default.  This feature should be able to disable when starting a new project but seems not always to work.
 
