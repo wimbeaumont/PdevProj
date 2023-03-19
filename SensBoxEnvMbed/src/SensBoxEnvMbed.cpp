@@ -14,6 +14,10 @@
  *  (C) Wim Beaumont Universiteit Antwerpen 2019 2020
  *  * License see
  *  https://github.com/wimbeaumont/PeripheralDevices/blob/master/LICENSE
+ *  KL25Z specific :
+ *  to activate the Watchdog function set #define DISABLE_WDOG    0  ( defaul 1) in the file  * 
+ *  mbed-os/targets/TARGET_Freescale/TARGET_KLXX/TARGET_KL25Z/device/system_MKL25Z4.c closed.
+ *  Program works also without activating the WD.  
 
  *  Version history :
  *  0.1   inital version form from SensBoxEnv  for MBED ,  ( not other platform support ) 
@@ -23,10 +27,18 @@
  *  1.1   scpi lib  corrected for float format overflow 
  *  1.2   check without wait 
  *  1.3   added VOLT support (reading MBED ADC A0)
+<<<<<<< HEAD
  *  1.4   hardreset , for I2C stuck  problem 
  */ 
 
 #define SENSBOXENVMBEDVER "1.4"
+=======
+ *  1.4   WD implementaton check doc , system_MKL25Z4.c has to be changed (mbed_os) 
+ *  2.0   WD  and none blocking read 
+ */ 
+
+#define SENSBOXENVMBEDVER "2.0"
+>>>>>>> refs/remotes/origin/master
 #if defined  __MBED__ 
 #define  OS_SELECT "MBED" 
 
@@ -60,9 +72,50 @@ bool  Always_Result = false ;
 
 
 
+BufferedSerial pc(USBTX,USBRX);
+
+#define RDBUFSIZE 512
+
+void kickWD(void) {
+	SIM->SRVCOP=0x55;
+	SIM->SRVCOP=0xAA;
+}
+
+int  read_noneblocking(  char* readbuf) {
+	char recchar='$'; // just dummy 
+	int bufcnt=0,cnt=0;
+	while (recchar != '\n') { // continue reading
+				thread_sleep_for(1); // min wait to slow down the while loop 
+				if(cnt < 100000 ) {kickWD();} // wait 
+				cnt++;
+				while(pc.readable())  {
+					cnt=0; kickWD();
+					pc.read(&recchar , 1);
+					//printf("recchar %c \n\r",recchar);
+					if ( recchar == '\r' ) continue; // ignore line feed 
+					if ( recchar == '\n' ) {						
+						readbuf[bufcnt]='\0';
+						//printf("read done %s \n\r", readbuf);
+					}		
+					else {
+						if ( bufcnt == RDBUFSIZE-1) { readbuf[0]='\0';recchar='\n' ;}
+						else { readbuf[bufcnt]=recchar;
+							//printf("%c , bufcnt %d  %c\r\n" , recchar, bufcnt,readbuf[bufcnt]);
+							bufcnt++;
+						}
+					}
+				}
+			}
+	return bufcnt;
+}	
+
+
+
+
+
 int main(void) { 
 
-   rled=1;bled=1;gled=1;
+   rled=0;bled=1;gled=1;
    char buffer[512] = {0};  // receive buffer 
    char* message= buffer;
    int valread=0;
@@ -76,11 +129,11 @@ int main(void) {
     bool  STAYLOOP =true;
     while(STAYLOOP ) {
     	//int buflength=(int) sizeof(buffer);
-    	scanf(" %512[^\n]s",buffer);// read unitl \n  the space before % is important  512 
-   
+    	//scanf(" %512[^\n]s",buffer);// read unitl \n  the space before % is important  512 
+        read_noneblocking( buffer);
        	// buffer[valread]='\0'; assume end with \0
-  		//printf("This is from the client : %s length %d  expect %d \n\r",buffer,strlen(buffer),valread );
-		valread=strlen(buffer);
+       	valread=strlen(buffer);
+  		//printf("This is from the client : %s length %d  expect %d \n\r",buffer,strlen(buffer),valread );		
 		//printf("got message nr %d ,  %s with length %d\n\r",lc2,buffer, valread);
 		/* if ( strcmp( message, "HardReset") == 0 ) {
 			STAYLOOP = false;
@@ -90,6 +143,7 @@ int main(void) {
 		} */
 	  	if (valread > 0) {
 	  		env_scpi_execute_command( buffer, valread);
+	  		//kickWD();
 	  		strcpy(message,	env_get_result());
 	  		//if( strcmp( message, "STOP done") == 0 ) {STAYLOOP = false;}
 	  		if(strlen(message)== 0) { strcpy(message, "wrong SCPI cmd");}
@@ -97,11 +151,14 @@ int main(void) {
 	  		strcpy(message, "MB message is zerro");
 	  	}
 	  	//printf( "will send %s length %d \n\r ", message ,strlen(message)  );
-	  	printf("%s\n\r", message );//need new line for the receiver , is waiting for that 
+	  	pc.sync(); //flush
+	  	printf("%s\r\n", message );//need new line for the receiver , is waiting for that 
+	  	//kickWD();
 		//printf("Have sent message %s\n\r ", message);
     
 	  	//wait_for_ms(1);
-  	  	
+  	  	rled=1;
+  	  	gled=0;
 	  	lc2++;
   } //while stayloop
 
