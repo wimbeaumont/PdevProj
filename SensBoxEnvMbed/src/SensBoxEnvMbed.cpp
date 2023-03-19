@@ -23,9 +23,10 @@
  *  1.1   scpi lib  corrected for float format overflow 
  *  1.2   check without wait 
  *  1.3   added VOLT support (reading MBED ADC A0)
+ *  1.4   hardreset , for I2C stuck  problem 
  */ 
 
-#define SENSBOXENVMBEDVER "1.3"
+#define SENSBOXENVMBEDVER "1.4"
 #if defined  __MBED__ 
 #define  OS_SELECT "MBED" 
 
@@ -81,6 +82,12 @@ int main(void) {
   		//printf("This is from the client : %s length %d  expect %d \n\r",buffer,strlen(buffer),valread );
 		valread=strlen(buffer);
 		//printf("got message nr %d ,  %s with length %d\n\r",lc2,buffer, valread);
+		/* if ( strcmp( message, "HardReset") == 0 ) {
+			STAYLOOP = false;
+			printf("perform a hard reset\r\n");
+			wait_for_ms(10);
+			NIVC_SystemReset();
+		} */
 	  	if (valread > 0) {
 	  		env_scpi_execute_command( buffer, valread);
 	  		strcpy(message,	env_get_result());

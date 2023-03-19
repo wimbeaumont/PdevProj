@@ -1,5 +1,8 @@
 /*
  * envsensread.cpp
+ * 
+ * implemenation of functions to read sensors from the I2C bus 
+ * 
  *
  *  Created on: Apr 29, 2020
  *      Author: wimb
@@ -7,7 +10,7 @@
  * 20201030 try to get it also working for MBED 
  * 20201103 added reseti2c bus function not tes
  * 20210414 added ADC readout 
- 
+ *  20230319 added reset amd status info 
  */
 
 
@@ -97,10 +100,9 @@ ADCInterface adc;
 #endif 
  
 
-
-int status =0;
+static int status =0;
 void wait_for_ms(int nr){ i2cdev->wait_for_ms(nr);};
-int get_status(void){return status;}
+int get_i2cstatus(void){return status;}
 
 int init_i2c_dev(void) {
 	//printf(" envsensread compiled for  %s \n\r", OS_SELECT);
@@ -169,8 +171,6 @@ float read_luminosity (void){
 
 int reset_i2cbus(void) {
 	 rst=0; // full reset for MBED  with solder patch 
- 	 i2cdev-> abort_transfer( ) ; // reset of the i2c bus in other case 
-	 i2cdev-> stop  ();
-
+	 i2cdev-> stop  (); // for MBED there is not a real reset of the bus so try to force a stop condition
 	 return 0;
 }
