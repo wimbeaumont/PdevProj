@@ -27,18 +27,13 @@
  *  1.1   scpi lib  corrected for float format overflow 
  *  1.2   check without wait 
  *  1.3   added VOLT support (reading MBED ADC A0)
-<<<<<<< HEAD
  *  1.4   hardreset , for I2C stuck  problem 
- */ 
-
-#define SENSBOXENVMBEDVER "1.4"
-=======
- *  1.4   WD implementaton check doc , system_MKL25Z4.c has to be changed (mbed_os) 
+ *  1.4b   WD implementaton check doc , system_MKL25Z4.c has to be changed (mbed_os) 
  *  2.0   WD  and none blocking read 
+ *  2.2   after merge with 1.4 
  */ 
 
-#define SENSBOXENVMBEDVER "2.0"
->>>>>>> refs/remotes/origin/master
+#define SENSBOXENVMBEDVER "2.2"
 #if defined  __MBED__ 
 #define  OS_SELECT "MBED" 
 
