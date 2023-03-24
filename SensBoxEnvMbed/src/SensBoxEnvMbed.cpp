@@ -32,17 +32,24 @@
  */ 
 
 #define SENSBOXENVMBEDVER "2.0"
-#if defined  __MBED__ 
+
+// OS / platform  specific  configs 
+#ifdef __PICO__ 
+#include <stdio.h>
+#include "pico/stdlib.h"
+#elif defined  __MBED__ 
 #define  OS_SELECT "MBED" 
 
 #include "mbed.h"
-
+#endif //
 // i2c devices are defined at a lower level ( envsensread.cpp)
-
+#if defined  __MBED__ 
 
 DigitalOut rled(LED1);
 DigitalOut gled(LED2);
 DigitalOut bled(LED3);
+
+BufferedSerial pc(USBTX,USBRX);
 
 #else //end __MBED__ 
 
@@ -65,25 +72,40 @@ bool  Always_Result = false ;
 
 
 
-BufferedSerial pc(USBTX,USBRX);
-
 #define RDBUFSIZE 512
 
 void kickWD(void) {
+#ifdef __PICO__ 
+#elif defined  __MBED__ 
 	SIM->SRVCOP=0x55;
 	SIM->SRVCOP=0xAA;
+#endif
 }
 
 int  read_noneblocking(  char* readbuf) {
 	char recchar='$'; // just dummy 
 	int bufcnt=0,cnt=0;
 	while (recchar != '\n') { // continue reading
+#ifdef __PICO__ 
+				sleep_ms (10); // has to be checked
+#elif defined  __MBED__ 
 				thread_sleep_for(1); // min wait to slow down the while loop 
+#endif
 				if(cnt < 100000 ) {kickWD();} // wait 
 				cnt++;
+#ifdef __PICO__ 
+				while(1)  {
+#elif defined  __MBED__ 
 				while(pc.readable())  {
+#endif
 					cnt=0; kickWD();
+#ifdef __PICO__ 
+					int reccharpico=getchar_timeout_us(0);
+					if ( reccharpico  == PICO_ERROR_TIMEOUT) continue;
+					else recchar=(char) reccharpico;
+#else					
 					pc.read(&recchar , 1);
+#endif
 					//printf("recchar %c \n\r",recchar);
 					if ( recchar == '\r' ) continue; // ignore line feed 
 					if ( recchar == '\n' ) {						
@@ -107,6 +129,9 @@ int  read_noneblocking(  char* readbuf) {
 
 
 int main(void) { 
+#ifdef __PICO__    
+       stdio_init_all();// pico init 
+#endif 
 
    rled=0;bled=1;gled=1;
    char buffer[512] = {0};  // receive buffer 
@@ -138,7 +163,11 @@ int main(void) {
 	  		strcpy(message, "MB message is zerro");
 	  	}
 	  	//printf( "will send %s length %d \n\r ", message ,strlen(message)  );
+#ifdef __PICO__    
+		stdio_flush();
+#else 
 	  	pc.sync(); //flush
+#endif
 	  	printf("%s\r\n", message );//need new line for the receiver , is waiting for that 
 	  	//kickWD();
 		//printf("Have sent message %s\n\r ", message);

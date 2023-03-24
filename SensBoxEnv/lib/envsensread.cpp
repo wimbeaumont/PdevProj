@@ -13,7 +13,19 @@
 
 
 // OS / platform  specific  configs 
-#if defined  __MBED__ 
+#ifdef __PICO__ 
+#include <stdio.h>
+#include "pico/stdlib.h"
+#include "hardware/timer.h"
+#include "hardware/watchdog.h"
+#include "hardware/clocks.h"
+#include "PicoI2CInterface.h"
+#include "ADCInterface.h"
+int rst;
+PicoI2CInterface mbedi2c;
+PicoI2CInterface*  mbedi2cp = &mbedi2c;
+
+#elif  defined  __MBED__ 
 #define  OS_SELECT "MBED" 
 
 #include "mbed.h"
