@@ -1,5 +1,8 @@
 /*
  * envsensread.cpp
+ * 
+ * implemenation of functions to read sensors from the I2C bus 
+ * 
  *
  *  Created on: Apr 29, 2020
  *      Author: wimb
@@ -7,7 +10,7 @@
  * 20201030 try to get it also working for MBED 
  * 20201103 added reseti2c bus function not tes
  * 20210414 added ADC readout 
- 
+ *  20230319 added reset amd status info 
  */
 
 
@@ -109,10 +112,9 @@ ADCInterface adc;
 #endif 
  
 
-
-int status =0;
+static int status =0;
 void wait_for_ms(int nr){ i2cdev->wait_for_ms(nr);};
-int get_status(void){return status;}
+int get_i2cstatus(void){return status;}
 
 int init_i2c_dev(void) {
 	//printf(" envsensread compiled for  %s \n\r", OS_SELECT);
@@ -120,7 +122,7 @@ int init_i2c_dev(void) {
  	 if(status)  {
  		 //printf("get error %d after init humidity \n\r", status);
  		 //printf ( "HTS221  lib version :%s\n\r ",shs.getversioninfo());
- 		 return status -200;
+ 		 return status -5000;
  	 }
  	 //printf ( "HTS221 lib version :%s\n\r ",shs.getversioninfo());
  	 int id=(int) shs.ReadID();
@@ -129,7 +131,7 @@ int init_i2c_dev(void) {
 	 
  	  status=luxm.get_status( );
  	 if( status) {  //  printf("get error %d after init \n\r", status);
- 	 	 status=status-100;
+ 	 	 status=status-1000;
  	 	 return status;
  	 }
  	 else {
@@ -143,7 +145,7 @@ int init_i2c_dev(void) {
  		 if(  status){
  			 //printf("reading config registers failed got status %d \n\r",status);
              if ( tid[lc].err_status== -20 ) {   tid[lc].err_status=0 ; status=0; }
-             else {return status-200 - lc*100;} //  major failure
+             else {return status-4900 - lc*100;} //  major failure
  		 }
  	 }
  	 return status;
@@ -181,8 +183,6 @@ float read_luminosity (void){
 
 int reset_i2cbus(void) {
 	 rst=0; // full reset for MBED  with solder patch 
- 	 i2cdev-> abort_transfer( ) ; // reset of the i2c bus in other case 
-	 i2cdev-> stop  ();
-
+	 i2cdev-> stop  (); // for MBED there is not a real reset of the bus so try to force a stop condition
 	 return 0;
 }

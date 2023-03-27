@@ -27,16 +27,24 @@
  *  1.1   scpi lib  corrected for float format overflow 
  *  1.2   check without wait 
  *  1.3   added VOLT support (reading MBED ADC A0)
- *  1.4   WD implementaton check doc , system_MKL25Z4.c has to be changed (mbed_os) 
+ *  1.4   hardreset , for I2C stuck  problem 
+ *  1.4b   WD implementaton check doc , system_MKL25Z4.c has to be changed (mbed_os) 
  *  2.0   WD  and none blocking read 
+ *  2.2   after merge with 1.4 
+ *  2.3   after merging changes for pico 
+ *  2.4   adjusting none blocking read 
  */ 
 
-#define SENSBOXENVMBEDVER "2.0"
+
+#define SENSBOXENVMBEDVER "2.45"
 
 // OS / platform  specific  configs 
 #ifdef __PICO__ 
 #include <stdio.h>
 #include "pico/stdlib.h"
+#include "pico/multicore.h"
+#include "hardware/watchdog.h"
+#include "PWM_PICO.h" 
 #elif defined  __MBED__ 
 #define  OS_SELECT "MBED" 
 
@@ -76,51 +84,73 @@ bool  Always_Result = false ;
 
 void kickWD(void) {
 #ifdef __PICO__ 
+watchdog_update();
 #elif defined  __MBED__ 
 	SIM->SRVCOP=0x55;
 	SIM->SRVCOP=0xAA;
 #endif
 }
 
+#ifdef __PICO__ 
+void core1_entry() {
+	PWM_PICO pwmled( PICO_DEFAULT_LED_PIN,10000);  //GPIO 25 
+	float delta_l=.05 ;
+	float dc_set;
+	int msleeptime=500;
+	if(watchdog_enable_caused_reboot()) msleeptime=10;
+	while(1) {
+		for (float dc =0; dc<100; dc+=delta_l) {
+			if( delta_l < 2.5)delta_l=1.05*delta_l; // increase the delta each time
+			dc_set=pwmled.set_dutycycle(dc);
+			sleep_ms(msleeptime);
+		}
+		
+	}
+}
+#endif
+
+
+
 int  read_noneblocking(  char* readbuf) {
+	//for the moment still blocking , to be done  time out check 
 	char recchar='$'; // just dummy 
 	int bufcnt=0,cnt=0;
 	while (recchar != '\n') { // continue reading
-#ifdef __PICO__ 
-				sleep_ms (10); // has to be checked
-#elif defined  __MBED__ 
-				thread_sleep_for(1); // min wait to slow down the while loop 
-#endif
-				if(cnt < 100000 ) {kickWD();} // wait 
-				cnt++;
-#ifdef __PICO__ 
-				while(1)  {
-#elif defined  __MBED__ 
-				while(pc.readable())  {
-#endif
-					cnt=0; kickWD();
-#ifdef __PICO__ 
-					int reccharpico=getchar_timeout_us(0);
-					if ( reccharpico  == PICO_ERROR_TIMEOUT) continue;
-					else recchar=(char) reccharpico;
-#else					
-					pc.read(&recchar , 1);
-#endif
-					//printf("recchar %c \n\r",recchar);
-					if ( recchar == '\r' ) continue; // ignore line feed 
-					if ( recchar == '\n' ) {						
-						readbuf[bufcnt]='\0';
-						//printf("read done %s \n\r", readbuf);
-					}		
-					else {
-						if ( bufcnt == RDBUFSIZE-1) { readbuf[0]='\0';recchar='\n' ;}
-						else { readbuf[bufcnt]=recchar;
+		#ifdef __PICO__ 
+			sleep_us (1000); // has to be checked
+			//sleep_ms (1); // has to be checked
+		#elif defined  __MBED__ 
+			thread_sleep_for(1); // min wait to slow down the while loop 
+		#endif
+
+		if(cnt < 100 ) {kickWD();} // wait 
+		cnt++;
+		#ifdef __PICO__ 
+			int reccharpico=getchar_timeout_us(0);
+			if ( reccharpico  != PICO_ERROR_TIMEOUT){
+				recchar=(char) reccharpico;
+		#elif defined  __MBED__ 
+		 	if (pc.readable())  { 
+				pc.read(&recchar , 1);
+		#endif
+				// char is read 
+				cnt=0; kickWD(); 
+				//printf("recchar %c \n\r",recchar);
+				if ( recchar == '\r' ) continue; // ignore line feed 
+				if ( recchar == '\n' ) {						
+					readbuf[bufcnt]='\0';
+					//printf("\n detected read done %s bufcnt = %d \n\r", readbuf,bufcnt);
+				}		
+				else {
+					if ( bufcnt == RDBUFSIZE-1) { readbuf[0]='\0';recchar='\n' ;}
+					else { readbuf[bufcnt]=recchar;
 							//printf("%c , bufcnt %d  %c\r\n" , recchar, bufcnt,readbuf[bufcnt]);
 							bufcnt++;
-						}
 					}
 				}
 			}
+	} // end while check for \n 
+			
 	return bufcnt;
 }	
 
@@ -131,6 +161,8 @@ int  read_noneblocking(  char* readbuf) {
 int main(void) { 
 #ifdef __PICO__    
        stdio_init_all();// pico init 
+       //watchdog_enable(40000, 1); //40 s 
+       multicore_launch_core1(core1_entry);
 #endif 
 
    rled=0;bled=1;gled=1;
@@ -139,7 +171,7 @@ int main(void) {
    int valread=0;
 
 	// initialize the I2C devices   
-    int status=init_i2c_dev();
+    int status=init_i2c_dev(); 
     //printf("i2cinit done with status %d \n\r",status);
     char hwversion[]=SENSBOXENVMBEDVER;	
     scpi_setup( hwversion);// initialize the parser
@@ -148,14 +180,21 @@ int main(void) {
     while(STAYLOOP ) {
     	//int buflength=(int) sizeof(buffer);
     	//scanf(" %512[^\n]s",buffer);// read unitl \n  the space before % is important  512 
+    	//printf("start reading input \r\n");
         read_noneblocking( buffer);
        	// buffer[valread]='\0'; assume end with \0
        	valread=strlen(buffer);
-  		//printf("This is from the client : %s length %d  expect %d \n\r",buffer,strlen(buffer),valread );		
+  		//printf("This is from the client : %s length %d  expect %d \n\r",buffer,strlen(buffer),valread );
 		//printf("got message nr %d ,  %s with length %d\n\r",lc2,buffer, valread);
+		/* if ( strcmp( message, "HardReset") == 0 ) {
+			STAYLOOP = false;
+			printf("perform a hard reset\r\n");
+			wait_for_ms(10);
+			NIVC_SystemReset();
+		} */
 	  	if (valread > 0) {
 	  		env_scpi_execute_command( buffer, valread);
-	  		//kickWD();
+	  		kickWD();
 	  		strcpy(message,	env_get_result());
 	  		//if( strcmp( message, "STOP done") == 0 ) {STAYLOOP = false;}
 	  		if(strlen(message)== 0) { strcpy(message, "wrong SCPI cmd");}
