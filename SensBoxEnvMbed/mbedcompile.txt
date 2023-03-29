@@ -1,54 +1,80 @@
-This program is for a MBED processor. 
+This program is for a MBED processor and Raspberry Pi Pico 
+
+how to compile the later once check mine picoproj reposotory 
 
 It uses the serial port to exhange  environment sensor data, using a SCPI protocol 
  
-Tested with mbed-cli  on linux and the KL25z  platform (easiest way to install is with `python3 -m pip install mbed-cli`) 
+Tested with mbed-cli  on linux and the KL25z  platform 
 
-mbed-cli  is using a repository system, git by default.  This feature should be able to disable when starting a new project but seems not always to work.
+mbed-cli  is using a repository system, git by default.  
 
-So I make a working directory 
+So I make a working directory for different projects/ 
 
 ~/mbedtst/common$
 
 the directory looks like 
 
-ADS1x1x_tst  
-AT30TSE752_tst  
-AT30TSE752_tst.lib  
-BUILD  
-cmd.txt  
-EnvChk  
-EnvChk.lib  
-HTS221_tst  
-HTS221_tst.lib  
-mbed_app.json  
-mbed-os  
-mbed-os.lib  
-SensBoxEnvMbed  
+make sure you use python  version  3.7.x  , with python 3.8 you break the pip functionality ( when you creat a new poject) 
+
+Eventual use 
+
+https://realpython.com/intro-to-pyenv/#installing-pyenv  to have python 7.3.(16)  as your default python in the directory do the installation
+
+Make sure you have the right version of python before you start. ( removing the "bad" instaltion is some work) 
+
+$>python3 -m pip install mbed-cli
+
+The GCC ARM cross compiler is in the PATH variable. (assumin you have installed the ARM gcc compiler)
+
+$>mbed config -G GCC_ARM_PATH /usr/bin
 
 
-make  a project dir:     $>mbed new SensBoxEnvMbed  
+$>cd /home/wimb/mbedtst/common/ 
+
+Use  the same mbed-os for several projects 
+
+$>mbed import mbed-os
+
+$> touch .mbed
+
+set  the MBED_OS_DIR  
+
+$>mbed config -G MBED_OS_DIR /home/wimb/mbedtst/common/mbed-os
+
+$>mkdir BUILD 
+
+check you working directory 
+
+~/mbedtst/common$ ls -lra
+drwxrwxr-x 21 wimb wimb 4096 Mär 29 16:52 mbed-os
+-rw-rw-r--  1 wimb wimb   31 Mär 29 17:15 .mbed
+drwxrwxr-x  3 wimb wimb 4096 Mär 29 17:14 BUILD
+..
+
+
+make  a project dir:
+
+$>mbed new   --scm none  SensBoxEnvMbed  
+
 In this dir make a soft link to SensBoxEnvMbed.cpp and to mbed_app.json  (this is important as it instruct to use the bare metal profile. with the standard mbed os6 the KL25z runs out of heap.) 
 
-so ls -l gives: 
-
-mbed_settings.py  
-SensBoxEnvMbed.cpp -> /home/wb/github/PdevProj/SensBoxEnvMbed/src/SensBoxEnvMbed.cpp  
-mbed_app.json -> /home/wb/github/PdevProj/SensBoxEnvMbed/src/mbed_app.json  
-
-not sure if mbed_settings.py is needed here 
+s -la  SensBoxEnvMbed/
+total 20
+drwxrwxr-x 2 wimb wimb 4096 Mär 29 16:44 .
+drwxrwxr-x 5 wimb wimb 4096 Mär 29 17:13 ..
+-rw-rw-r-- 1 wimb wimb    7 Mär 29 16:43 .mbed
+lrwxrwxrwx 1 wimb wimb   59 Mär 29 16:44 mbed_app.json -> /home/wimb/github/PdevProj/SensBoxEnvMbed/src/mbed_app.json
+-rw-rw-r-- 1 wimb wimb 1339 Mär 29 16:43 mbed_settings.py
+lrwxrwxrwx 1 wimb wimb   64 Mär 29 16:44 SensBoxEnvMbed.cpp -> /home/wimb/github/PdevProj/SensBoxEnvMbed/src/SensBoxEnvMbed.cpp
 
 
 
 To compile I use the command:   
-$>mbed compile -t GCC_ARM -m KL25z --source SensBoxEnvMbed/ --source /home/wb/github/PdevProj/SensBoxEnv/lib/ --source /home/wb/github/PeripheralDevices/ --source mbed-os --build ./BUILD/KL25Z/GCC_ARM
+
+$>mbed compile -t GCC_ARM -m KL25z --source SensBoxEnvMbed/ --source /home/wimb/github/PdevProj/SensBoxEnv/lib/ --source /home/wimb/github/PeripheralDevices/ --source mbed-os --build ./BUILD/KL25Z/GCC_ARM
 
 
-The GCC ARM cross compiler is in the PATH variable. 
-
-The program is used together with SensBoxEnvSer that is in principle a socket to serial interface translator.  ( the SensBoxEnvSer is a Linux program) 
-
-
+The file to upload to your MBED  (SensBoxEnvMbed.bin) is now in BUILD/KL25Z/GCC_ARM/
 
 
 
