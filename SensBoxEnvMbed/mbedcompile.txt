@@ -40,9 +40,14 @@ not sure if mbed_settings.py is needed here
 
 
 
-To compile I use the command:   
+To compile I use the command for the KL25z platform:   
 $>mbed compile -t GCC_ARM -m KL25z --source SensBoxEnvMbed/ --source /home/wb/github/PdevProj/SensBoxEnv/lib/ --source /home/wb/github/PeripheralDevices/ --source mbed-os --build ./BUILD/KL25Z/GCC_ARM
 
+For this platfrom the platform Watchdog is not activted bij default. 
+To activate the Watchdog function set #define DISABLE_WDOG  0  ( defaul 1) in the file:
+  mbed-os/targets/TARGET_Freescale/TARGET_KLXX/TARGET_KL25Z/device/system_MKL25Z4.c closed.
+ 
+Program works also without activating the WD.  
 
 The GCC ARM cross compiler is in the PATH variable. 
 
