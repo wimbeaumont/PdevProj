@@ -30,9 +30,7 @@ V 1.0  used on the Raspberry Pi
 V 2.0  targeting to work with an mbed ( serial ) interface , but this version only works with dummy 
        the this_readtemperature is a patch and should been done on the make ( cmake) level to provide an dummy external readme 
 V 2.2  add ADC / voltage support 
-
-
-
+V 3.0  20230319 added reset and status info 
 */
 //============================================================================
 #include <stdio.h>
@@ -41,13 +39,17 @@ V 2.2  add ADC / voltage support
 #include <string.h>
 
 struct scpi_parser_context ctx;
-
+// general device status
+int dev_status=0;
+static int nr_i2crst=0;
 #if defined  __DUMMY__ 
 
 float this_read_temperature( int ) { return 21.34; }
 float this_read_humidity(void) {return 30.4; }
 float this_read_luminosity(void) {return 0; }
 float this_read_voltage( int i ) { return  2.25;}
+int get_i2cstatus(void) {return 0;};
+int reset_i2cbus(void){return 0;};
 
  #else 
 
@@ -55,6 +57,8 @@ extern  float read_temperature( int );
 extern  float read_humidity(void);
 extern  float read_luminosity(void);
 extern  float read_voltage(int );
+extern  int get_i2cstatus(void);
+extern   int reset_i2cbus(void);
 
 float this_read_temperature( int i ) { return read_temperature( i); }
 float this_read_humidity(void) {return read_humidity(); }
@@ -65,6 +69,7 @@ float this_read_voltage( int i ) { return read_voltage( i); }
 
 scpi_error_t identify(struct scpi_parser_context* context,struct scpi_token* command);
 scpi_error_t gethwversion(struct scpi_parser_context* context,struct scpi_token* command);
+scpi_error_t get_error(struct scpi_parser_context* context,struct scpi_token* command);
 scpi_error_t send_stop(struct scpi_parser_context* context,struct scpi_token* command);
 scpi_error_t get_temperature(struct scpi_parser_context* context,struct scpi_token* command);
 scpi_error_t get_temperature_ch(struct scpi_parser_context* context,struct scpi_token* command);  // for channel given as parameter
@@ -100,6 +105,7 @@ void scpi_setup(char* hwversion_ ) {
 	scpi_register_command(ctx.command_tree, SCPI_CL_SAMELEVEL, "*IDN?", 5,"*IDN?", 5, identify);
 	scpi_register_command(ctx.command_tree, SCPI_CL_SAMELEVEL, "*HWVer?", 7,"*HWver?", 7, gethwversion);
 	scpi_register_command(ctx.command_tree, SCPI_CL_SAMELEVEL, "*STOP", 5,"*STP", 3, send_stop);
+	scpi_register_command(ctx.command_tree, SCPI_CL_SAMELEVEL, "*ERRor?", 6,"*ERR?", 4, get_error);
 	measure = scpi_register_command(ctx.command_tree, SCPI_CL_CHILD, "MEASURE", 7, "MEAS", 4, NULL);
 	meas_temp=scpi_register_command(measure, SCPI_CL_CHILD, "TEMPERATURE?", 12, "TEMP?", 5,get_temperature);
 	scpi_register_command(measure, SCPI_CL_CHILD, "TEMPERATURE0?", 13, "TEMP0?", 6,get_temperature_ch0);
@@ -130,8 +136,18 @@ scpi_error_t gethwversion(struct scpi_parser_context* context,struct scpi_token*
 	return SCPI_SUCCESS;
 }
 
+
+scpi_error_t get_error(struct scpi_parser_context* context,struct scpi_token* command) {
+	scpi_free_tokens(command);
+	dev_status=get_i2cstatus(); 
+	add2resulti(dev_status);
+	return SCPI_SUCCESS;
+}
+
 scpi_error_t send_stop(struct scpi_parser_context* context,struct scpi_token* command) {
 	scpi_free_tokens(command);
+	reset_i2cbus();
+	nr_i2crst=0;
 	add2result("STOP done");
 	return SCPI_SUCCESS;
 }
@@ -267,6 +283,18 @@ scpi_error_t get_temperature_ch(struct scpi_parser_context* context,struct scpi_
 	return SCPI_SUCCESS;
 }
 
-void env_scpi_execute_command(const char* l_buf,int length){ scpi_execute_command(&ctx, l_buf,length);}
+
+void env_scpi_execute_command(const char* l_buf,int length){
+	// check i2c bus status and reset i2c bus if status is < 0
+	dev_status=get_i2cstatus(); 
+	if ( dev_status < 0) {
+		reset_i2cbus();
+		nr_i2crst++;
+	}
+	if( nr_i2crst > 3) { dev_status=-100; }
+	 {	scpi_execute_command(&ctx, l_buf,length);}
+	 
+}
+
 char* env_get_result() { return get_result();}
 
