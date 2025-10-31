@@ -1,44 +1,22 @@
 
 /** program to check the environment status
  *  first usage  ,  Sensor IV test 
- *  Read temperature and humidty via RS232 software 
- *  if char g is send the program response with a string 
- *  Tx  temperature of sensor x 
- *  Hx  humidity of sensor x 
- *  This is a fork from the prog EnvChk on "my"  MBED repository 
- *  The original program was developed for the FRMD KL05Z
- *  This program targets the Raspberry Pi as this is the target machine 
- *  for the Sensor box control.  So moving this to the RP saves hardware 
- *  Due to limitation of the available software for the Raspberry Pi we have to go back to FRMD KL25Z 
- *  but want to keep the advatages of the SCPI  communicaton 
- *  (C) Wim Beaumont Universiteit Antwerpen 2019 2020
+ *  BI box is an fork of version 2.6 
+ *  Read temperature and humidty via RS232 
+ *  Using the SCPI protocol 
+ *  This will be target to pico (v1)  
+ *  (C) Wim Beaumont Universiteit Antwerpen 2019 2025
  *  * License see
  *  https://github.com/wimbeaumont/PeripheralDevices/blob/master/LICENSE
- *  KL25Z specific :
- *  to activate the Watchdog function set #define DISABLE_WDOG    0  ( defaul 1) in the file  * 
- *  mbed-os/targets/TARGET_Freescale/TARGET_KLXX/TARGET_KL25Z/device/system_MKL25Z4.c closed.
- *  Program works also without activating the WD.  
-
+ 
  *  Version history :
- *  0.1   inital version form from SensBoxEnv  for MBED ,  ( not other platform support ) 
- *  0.4x  checking with hardware 
- *  0.6x  initial production version 
- *  1.0   added hwversion ,  corrected memory leak in scpi parser 
- *  1.1   scpi lib  corrected for float format overflow 
- *  1.2   check without wait 
- *  1.3   added VOLT support (reading MBED ADC A0)
- *  1.4   hardreset , for I2C stuck  problem 
- *  1.4b   WD implementaton check doc , system_MKL25Z4.c has to be changed (mbed_os) 
- *  2.0   WD  and none blocking read 
- *  2.2   after merge with 1.4 
- *  2.3   after merging changes for pico 
- *  2.4   adjusting none blocking read 
- *  2.5   added set frequency  in envsensread 
- *  2.6   checking none blocking serial reading
+ *  0.1   inital version form fork from  SensBoxEnvSer only compilation check 
+ *  0.2   this will  mainy target the pico platform  
+ *  0.3   compiled and linked , added  Pico digital out 
+ *  0.4   checking 
  */ 
 
-
-#define SENSBOXENVMBEDVER "2.60"
+#define BIBOXENVSERVER "0.46"
 
 // OS / platform  specific  configs 
 #ifdef __PICO__ 
@@ -47,13 +25,12 @@
 #include "pico/multicore.h"
 #include "hardware/watchdog.h"
 #include "PWM_PICO.h" 
-#elif defined  __MBED__ 
-#define  OS_SELECT "MBED" 
-
-#include "mbed.h"
+//#elif defined  __MBED__ 
+//#define  OS_SELECT "MBED" 
+//#include "mbed.h"
 #endif //
 // i2c devices are defined at a lower level ( envsensread.cpp)
-#if defined  __MBED__ 
+#if defined  __MBED__  // just for compatibility  but not maintained 
 
 DigitalOut rled(LED1);
 DigitalOut gled(LED2);
@@ -68,20 +45,22 @@ int gled ;
 int bled ;
 #endif //
 
-#include <stdio.h>
+
 #include <stdlib.h>     // atof 
 #include <string.h> 
-#include "envsensread.h"
+// this contain the init devices ,setup the I2C devices 
+#include "bi_sensread.h"
+#include "bi_cpuread.h" // this contains the readout functions for hw resources
 #include "env_scpiparser.h"
-
-
+#include "hum2dewputils.h"
+#include "Sens_hwstatus.h"
 
 // globals for char control 
 bool  Get_Result = false ;
 bool  Always_Result = false ;
 const unsigned int RDBUFSIZE=256;
 
-
+int interface_status=0 ;// interface are not initialized
 
 void kickWD(void) {
 #ifdef __PICO__ 
@@ -98,28 +77,62 @@ void  serial_bufferflush(void) {stdio_flush();}
 #else 
 void  serial_bufferflush(void) {pc.sync(); }//flush
 #endif
+// default values if not initialized 
+float  Rntc_now;
+float Hum=110; // humidity 
+float Tp=-300; //temperature 
+float Vsys=0;// 5V power , ref for temperature 
+float dp=-300; //dewpoint  -300 if not iniitalized 
+float Tint=-300; // internal temperatur
 
 
-
+// temp functions 
+//float read_dewpoint(int ch=0);
+float read_dewpoint(int ch=0) { return dp; }
+float read_temperature_ntc(int ch) {return Tp; } // read the temperature from the NTC sensor
+float read_humidity_adc(int ch=0) { return Hum; }
 
 #ifdef __PICO__ 
+enum ADCINP {HUMIN=0, TEMPIN=1 , VSYSIN=2,NOTCON=3,TINT=4 }; // this are the ADC channels not the pins!! 
+
+
 void core1_entry() {
+	// contiously read of the NTC and humidyt sensor and ouptut this to the PWM outputs
+	// to mimic a analogue dewpoint sensor 
 	PWM_PICO pwmled( PICO_DEFAULT_LED_PIN,10000);  //GPIO 25 
 	float delta_l=.05 ;
 	float dc_set;
 	int msleeptime=500;
-	if(watchdog_enable_caused_reboot()) msleeptime=10;
+	PWM_PICO  outT(10,10000); // have to check for  optimal frequency 
+    PWM_PICO  outDP(11,10000);
+	outT.init_PWMVout(-40,50,0,3.3);
+    outDP.init_PWMVout(-60,20,0.3636,1.818); // for 20mA output equivalent
+	update_hwstatus(HWstatus_core1);
 	while(1) {
+		// the alife LED 
 		for (float dc =0; dc<100; dc+=delta_l) {
 			if( delta_l < 2.5)delta_l=1.05*delta_l; // increase the delta each time
 			dc_set=pwmled.set_dutycycle(dc);
-			sleep_ms(msleeptime);
 		}
-		
+		kickWD();
+		//if (interface_status 	) {
+		if (true 	) {
+			//Vsys=adc2Vsys(read_voltage(VSYSIN) );
+			//Tp= adc2Tp(read_voltage(TEMPIN), Rntc_now);
+			Hum=adc2Hum(read_voltage(HUMIN ),Tp);
+			dp=dewpoint(Hum,Tp);
+			outT.set_PWMVout(Tp);
+			outDP.set_PWMVout(dp);
+			//Vsys=adc2Vsys(read_voltage(VSYSIN) );
+			Tint=adc2Tint(read_voltage(TINT) );
+			Vsys=Tint; // for the moment to check
+        }
+		Tp=Tp+0.1; // just to have some change in the output
+		sleep_ms(msleeptime);
 	}
+
 }
 #endif
-
 
 
 int  read_noneblocking(  char* readbuf) {
@@ -171,25 +184,37 @@ int  read_noneblocking(  char* readbuf) {
 }	
 
 
-
-
-
 int main(void) { 
 #ifdef __PICO__    
-       stdio_init_all();// pico init 
-       //watchdog_enable(40000, 1); //40 s 
-       multicore_launch_core1(core1_entry);
+     stdio_init_all();// pico init 
+
+     multicore_launch_core1(core1_entry);
+
+    if (watchdog_caused_reboot()) {
+        printf("Rebooted by Watchdog ");
+        update_hwstatus( HWstatus_wdrestart);
+    }else update_hwstatus( HWstatus_wdrestart, false);
+	// Enable the watchdog, requiring the watchdog to be updated every 5100ms or the chip will reboot
+    // second arg is pause on debug which means the watchdog will pause when stepping through code
+    //watchdog_enable(5100, 1);
+
 #endif 
 
-   rled=0;bled=1;gled=1;
+
+
    char buffer[512] = {0};  // receive buffer 
    char* message= buffer;
    int valread=0;
    int rdbufcnt=0;	
 	// initialize the I2C devices   
-    int status=init_i2c_dev(); 
+    int interface_status=init_i2c_dev(); 
+	if (interface_status ) {
+		update_hwstatus(HWstatus_init);
+	}else {
+		update_hwstatus(HWstatus_init,false);
+	}
     //printf("i2cinit done with status %d \n\r",status);
-    char hwversion[]=SENSBOXENVMBEDVER;	
+    char hwversion[]=BIBOXENVSERVER;	
     scpi_setup( hwversion);// initialize the parser
     int lc2=0;  
     bool  STAYLOOP =true;

@@ -324,7 +324,6 @@ scpi_execute_command(struct scpi_parser_context* ctx, const char* command_string
 	struct scpi_token* parsed_command;
 	SSerial.clr();
 	parsed_command = scpi_parse_string(command_string, length);
-	
 	command = scpi_find_command(ctx, parsed_command);
 	if(command == NULL)
 	{

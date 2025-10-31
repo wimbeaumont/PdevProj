@@ -32,7 +32,7 @@ it initialise the SCPI tree for the envsens project and passes only the necessar
 
 #ifndef ENV_SCPIPARSER_H_
 #define ENV_SCPIPARSER_H_
-#define ENV_SCPIPARSER_VER "1.6"
+#define ENV_SCPIPARSER_VER "3.14"
 void scpi_setup(char* hwversion);
 
 void env_scpi_execute_command(const char* l_buf,int length);

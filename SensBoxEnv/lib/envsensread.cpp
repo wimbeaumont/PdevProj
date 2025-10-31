@@ -98,6 +98,7 @@ int rst;
 
 I2CInterface* i2cdev= mbedi2cp;
 
+
 // all the devices are static ( in real world they really are )
 VEML7700 luxm ( i2cdev);  // so static global  in this file
 // init tempeature senesor with addr 1 en 2
@@ -117,6 +118,7 @@ void wait_for_ms(int nr){ i2cdev->wait_for_ms(nr);};
 int get_i2cstatus(void){return status;}
 
 int init_i2c_dev(void) {
+	i2cdev->frequency (400000);
 	//printf(" envsensread compiled for  %s \n\r", OS_SELECT);
  	 int status=shs.get_status( );
  	 if(status)  {
@@ -168,7 +170,7 @@ float read_voltage( int ch) {
 	return volt;
 	
 }
-float read_humidity (void){
+float read_humidity (int ch){
 	float hum;
 	status=shs.GetHumidity(&hum);
 			//printf("after read humidity  status %d \n\r", status );
