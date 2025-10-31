@@ -69,9 +69,19 @@ lrwxrwxrwx 1 wimb wimb   64 Mär 29 16:44 SensBoxEnvMbed.cpp -> /home/wimb/githu
 
 
 
-To compile I use the command:   
 
+To compile I use the command for the KL25z platform:   
 $>mbed compile -t GCC_ARM -m KL25z --source SensBoxEnvMbed/ --source /home/wimb/github/PdevProj/SensBoxEnv/lib/ --source /home/wimb/github/PeripheralDevices/ --source mbed-os --build ./BUILD/KL25Z/GCC_ARM
+
+For this platfrom the platform Watchdog is not activted bij default. 
+To activate the Watchdog function set #define DISABLE_WDOG  0  ( defaul 1) in the file:
+  mbed-os/targets/TARGET_Freescale/TARGET_KLXX/TARGET_KL25Z/device/system_MKL25Z4.c closed.
+ 
+Program works also without activating the WD.  
+
+The GCC ARM cross compiler is in the PATH variable. 
+
+The program is used together with SensBoxEnvSer that is in principle a socket to serial interface translator.  ( the SensBoxEnvSer is a Linux program) 
 
 
 The file to upload to your MBED  (SensBoxEnvMbed.bin) is now in BUILD/KL25Z/GCC_ARM/
