@@ -36,6 +36,8 @@ The projects
  
 *   LTC2633_app just some trails 
 *   SiPmCtrl this is for a PCB to which a SiPm can be connected, containing amplifiers discriminator and bias. The LTC2633 is used to to set levels
+*   SiPmCtrl2  use only SiPmCtrl.lib , that include only i2c interface and LTC2633 , mainly to test the lib that is easy to use in a python wrapper 
+*   MuonPmtCtrl  for controlling the interface to the CAEN A7505PB , 1.6KV 500uA.  It uses the DAC LTC2633C for setting the voltage , current levels and the ADC LTC2493 to readback the voltages / currents .  
 *   LinuxI2Ctest to check some I2C functions (with a oscilloscope).
 *   SensBoxEnvSimple  readout a a number of sensors are response with one string containing all the measurements on any request communication with sockets to a client 
 *   SensBoxEnv readout the same sensors as SensBoxEnvSimple but wait for a scpi formated command to respond with the info requested by the command. 

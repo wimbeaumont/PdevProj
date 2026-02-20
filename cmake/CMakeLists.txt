@@ -18,16 +18,17 @@ project(PdevProj )
 # to compile for dummy cmake . -DDUMMY=true 
 # but once used , make sure you remove it from cache or cmake . -DDUMMY=FALSE 
 if ( DUMMY )
-message ("compile for dummy") 
+message ("dummy  flag set compile for dummy") 
 set( TARGET_FLAG __DUMMY__) 
 else()
 	if (UNIX) 
+		message( "os is UNIX " )
 		if ( EXISTS "/dev/i2c-1")
 			set(TARGET_FLAG  __LINUX__)
 			message("compile for LINUX i2cdev")
 		else() 
        			set(TARGET_FLAG  __DUMMY__ )
-			message ("compile for dummy") 
+			message ("no /dev/i2c-1 found compile for dummy not for LINUX ") 
 
 		endif()
 	else()
@@ -57,13 +58,19 @@ HEADER_DIRECTORIES ( dev_incl_dirs  "../../PeripheralDevices/*/*.h")
 
 # generate the i2c dev  lib 
 
-file(GLOB_RECURSE simplelibs  ../../PeripheralDevices/*.cpp  ../../PeripheralDevices/*.h )
+file(GLOB_RECURSE simplelibs  ../../PeripheralDevices/*.cpp   )
 # for the moment don't include  MCP4728setaddr.cpp 
 list(REMOVE_ITEM simplelibs "${CMAKE_CURRENT_SOURCE_DIR}/../../PeripheralDevices/MCP4728/MCP4728setaddr.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/../../PeripheralDevices/MCP4728/MCP4728setaddr.h")
-
 add_library(tstlib STATIC  ${simplelibs})
 target_compile_options(tstlib PUBLIC -g -D${TARGET_FLAG})
 target_include_directories(tstlib PUBLIC  ../../PeripheralDevices/DevInterfaces/)
+#message ( "${CMAKE_CURRENT_SOURCE_DIR}/../../PeripheralDevices/MCP4728//MCP4728setaddr.cpp" )
+
+
+# this lib is only for SiPmCtrl2 test and other application that want to use this functionality as C lib . 
+add_library(SiPmCtrllib SHARED ../../PeripheralDevices/LTC2633/ltc2633.cpp ../SiPmCtrl/lib/SiPmCtrllib.cpp ../../PeripheralDevices/DevInterfaces/getVersion.cpp)
+target_compile_options(SiPmCtrllib PUBLIC -g -D${TARGET_FLAG})
+target_include_directories(SiPmCtrllib PUBLIC  ../../PeripheralDevices/DevInterfaces/ ../../PeripheralDevices/LTC2633/ ../../PeripheralDevices/I2Cinterfaces/)
 #message ( "${CMAKE_CURRENT_SOURCE_DIR}/../../PeripheralDevices/MCP4728//MCP4728setaddr.cpp" )
 
 
@@ -88,7 +95,8 @@ target_include_directories(applib  PUBLIC  ../../PdevUtils/scpi-parser/inc  ${de
 
 # collect all main programs 
 file(GLOB_RECURSE ALLPROGS  ../*/src/*.cpp)
-
+#only for checking python shared lib 
+list(REMOVE_ITEM ALLPROGS "${CMAKE_CURRENT_SOURCE_DIR}/../SiPmCtrl/src/SiPmCtrl2.cpp"  ) 
 # MBED specific program 
 list(REMOVE_ITEM ALLPROGS "${CMAKE_CURRENT_SOURCE_DIR}/../SensBoxEnvMbed/src/SensBoxEnvMbed.cpp"  
 "${CMAKE_CURRENT_SOURCE_DIR}/../EnvChk/src/EnvChk.cpp"  
@@ -111,6 +119,12 @@ set( incl_dirs ${dev_incl_dirs} ${incl_dirs}  )
 ##############################################################################
 ## target definitions #########################################################
 ###############################################################################
+##this uses only specific libs 
+add_executable( SiPmCtrl2   "${CMAKE_CURRENT_SOURCE_DIR}/../SiPmCtrl/src/SiPmCtrl2.cpp"  )
+target_compile_options( SiPmCtrl2  PUBLIC -g -Wall -D${TARGET_FLAG})
+target_include_directories(SiPmCtrl2 PUBLIC  ${incl_dirs}  )
+target_link_libraries(  SiPmCtrl2 SiPmCtrllib  )
+
 
 
 foreach ( testprog ${ALLPROGS}) 
