@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
    
    switch (cmd ) {
 	   
-		case 'b' : {volt=volt/0.0342 ;
+		case 'b' : { //volt=volt/0.0342 ; is already done in the lib 
 					errcode= setBiasVoltage(ch , volt ) ;
 					if (errcode ){
 						printf("failed to set biasctrl value %d for channel %d errcode %d\n\r",int(volt) ,ch,errcode);
@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
 					if (errcode ){
 						printf("failed to set Lvl value %d for HW channel %d errcode %d\n\r",int(volt) ,ch,errcode);
 					}
-					else printf(" set DAC Lvl hw ch %d to digvalue %d \n\r", ch, int(volt));
+					else printf(" set DAC Lvl hw ch %d to digvalue %d \n\r", ch, int(volt/0.000603));
 		}break;
 		default :	printf(" %c is not supported \n\r" , cmd);
    }

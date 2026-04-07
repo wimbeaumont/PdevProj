@@ -2,7 +2,7 @@
 #define SIPMCTRLLIB_H
 
 /** program to controll the bias and trigger levels for a two channel 
-
+  * info see SiPmCtrllib.ccp 
   * (C) Wim Beaumont Universiteit Antwerpen 2019
  *  License see
  *  https://github.com/wimbeaumont/PeripheralDevices/blob/master/LICENSE
@@ -15,10 +15,11 @@
 #define  OS_SELECT "linux_dummy" 
 #endif
 
-#define SIPMCTRLLIB "1.6"
+#define SIPMCTRLLIB "1.7"
 
+// set the bias voltage  in volt , function convert the volt to digital value for the ADC 
 int setBiasVoltage(int ch , float volt ) ;
-
+// set the disciminator level in volt , function convert the volt to digital value for the ADC 
 int setDiscriminatorLevel( int ch, float volt);
 
 

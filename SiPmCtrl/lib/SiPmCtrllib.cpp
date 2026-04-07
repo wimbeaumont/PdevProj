@@ -10,13 +10,14 @@
  *  V 1.52  :  version work with RP and  SiPm board
  *  V 1.53  :  change atoi to atof  for third argument 
  *  V 1.6   :  use the control as lib 
+ *  V 1.7   :  corrections for setDiscriminatorLevel  added correct conversion level , tested 20260407
   * (C) Wim Beaumont Universiteit Antwerpen 2019
  *  License see
  *  https://github.com/wimbeaumont/PeripheralDevices/blob/master/LICENSE
  */ 
  
 
-#define SIPMCTRLLIB "1.6"
+#define SIPMCTRLLIB "1.7"
 
 
 #include "dev_interface_def.h"
@@ -99,9 +100,9 @@ extern  int setBiasVoltage(int ch , float volt ) {
 }
 
 extern  int setDiscriminatorLevel( int ch, float volt) {
-    volt=volt/0.0342 ;
+    volt=volt/0.000603;  // =2.5 /4096 
     int errcode;
-    errcode= biasctrl.setDACvalue(int(volt) ,ch);  
+    errcode= discr_lvl.setDACvalue(int(volt) ,ch);  
     return errcode;
 }
 
