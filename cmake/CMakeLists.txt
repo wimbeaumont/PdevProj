@@ -101,7 +101,9 @@ list(REMOVE_ITEM ALLPROGS "${CMAKE_CURRENT_SOURCE_DIR}/../SiPmCtrl/src/SiPmCtrl2
 list(REMOVE_ITEM ALLPROGS "${CMAKE_CURRENT_SOURCE_DIR}/../SensBoxEnvMbed/src/SensBoxEnvMbed.cpp"  
 "${CMAKE_CURRENT_SOURCE_DIR}/../EnvChk/src/EnvChk.cpp"  
 )
-
+#20260728 not complete exclude 
+list(REMOVE_ITEM ALLPROGS "${CMAKE_CURRENT_SOURCE_DIR}/../SensBoxEnv/src/SensBoxEnv.cpp"  ) 
+list(REMOVE_ITEM ALLPROGS "${CMAKE_CURRENT_SOURCE_DIR}/../BiBoxEnvSer/src/BiBoxEnvSer.cpp"  ) 
 
 #get the incl list for the apll specific libs 
 HEADER_DIRECTORIES ( incl_dirs "../../PdevUtils/*/lib/*.h")

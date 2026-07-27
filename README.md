@@ -5,6 +5,11 @@ Projects  that uses the PeripheralDevices.  These can be used as examples how to
 Be aware that in most cases this only the development phase as the final code has to move to the repository of the project.
  
 In respect to the  peripheral_dev_tst  these projects can target a specific platform or operating system so not all executables will be built by cmake 
+
+
+!!! 20260728" 
+Due to an to early commit the programs SensBoxEnv and  BiBoxEnvSer.cpp don't compile  so these are excluded in the CMakeList.txt 
+
  
 ##General build instructions 
 
